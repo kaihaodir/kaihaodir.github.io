@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Thinking..]]></title>
+  <link href="http://kaihaodir.github.io/atom.xml" rel="self"/>
+  <link href="http://kaihaodir.github.io/"/>
+  <updated>2015-12-18T14:14:10+08:00</updated>
+  <id>http://kaihaodir.github.io/</id>
+  <author>
+    <name><![CDATA[Kai.]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Test Post]]></title>
+    <link href="http://kaihaodir.github.io/blog/2015/12/18/test-post/"/>
+    <updated>2015-12-18T14:12:14+08:00</updated>
+    <id>http://kaihaodir.github.io/blog/2015/12/18/test-post</id>
+    <content type="html"><![CDATA[<h2>title</h2>
+
+<h1>content</h1>
+
+<p>&lsquo;&rsquo;&lsquo;c++
+void int main(int argc, char *argv[]) {
+    return 0;
+}
+&rsquo;&lsquo;&rsquo;</p>
+]]></content>
+  </entry>
+  
+</feed>
