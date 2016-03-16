@@ -9,7 +9,9 @@
   <meta name="author" content="Kai">
 
   
-  <meta name="description" content="在使用Instrumnents对程序进行内存测试的时候，发现有几处异常处理的地方提示内存泄露。经过分析得知，因为异常处理，改变代码执行路径，导致编译生成的 release 代码没有执行。 简单写了些测试代码验证： 1
+  <meta name="description" content="在使用Instrumnents对程序进行内存测试的时候，发现有几处异常处理的地方提示内存泄露。经过分析得知，因为异常处理，改变代码执行路径，导致编译生成的 release 代码没有执行。
+&lt;!-more->
+简单写了些测试代码验证： 1
 2
 3
 4
@@ -21,11 +23,7 @@
 10
 11
 12
-13
-14
-15
-16
-17 &hellip;">
+13 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -103,9 +101,9 @@
   </header>
 
 
-  <div class="entry-content"><p>在使用Instrumnents对程序进行内存测试的时候，发现有几处异常处理的地方提示内存泄露。经过分析得知，<strong>因为异常处理，改变代码执行路径，导致编译生成的 release 代码没有执行</strong>。</p>
-
-<p>简单写了些测试代码验证：</p>
+  <div class="entry-content"><p>在使用Instrumnents对程序进行内存测试的时候，发现有几处异常处理的地方提示内存泄露。经过分析得知，<strong>因为异常处理，改变代码执行路径，导致编译生成的 release 代码没有执行</strong>。
+&lt;!-more->
+简单写了些测试代码验证：</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
