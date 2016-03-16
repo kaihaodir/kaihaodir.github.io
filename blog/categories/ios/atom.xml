@@ -4,7 +4,11 @@
   <title><![CDATA[Category: Ios | Thinking...]]></title>
   <link href="http://kaihaodir.github.io/blog/categories/ios/atom.xml" rel="self"/>
   <link href="http://kaihaodir.github.io/"/>
+<<<<<<< HEAD
   <updated>2016-03-15T01:00:20+08:00</updated>
+=======
+  <updated>2016-03-13T17:58:49+08:00</updated>
+>>>>>>> 0fd83b41d5bcfeee37f1c3857beb7029ea6a0e60
   <id>http://kaihaodir.github.io/</id>
   <author>
     <name><![CDATA[Kai]]></name>
@@ -50,6 +54,7 @@
 <p>反复进出这个页面几次后，在Instruments上果然看到提示内存泄露，而且泄露的地方就指明是 <code>@try{ }</code> 里面创建的对象。</p>
 
 <p><img src="./exception-memory-leak.png" alt="img" /></p>
+<<<<<<< HEAD
 
 <h4>解决思路</h4>
 
@@ -87,6 +92,8 @@ It does not end the lifetime of __strong variables when their scopes are abnorma
 It does not perform releases which would occur at the end of a full-expression if that full-expression throws an exception.
 A program may be compiled with the option -fobjc-arc-exceptions in order to enable these, or with the option -fno-objc-arc-exceptions to explicitly disable them, with the last such argument “winning”.
 </code></pre></blockquote>
+=======
+>>>>>>> 0fd83b41d5bcfeee37f1c3857beb7029ea6a0e60
 ]]></content>
   </entry>
   
