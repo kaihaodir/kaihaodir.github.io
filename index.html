@@ -9,7 +9,7 @@
   <meta name="author" content="Kai">
 
   
-  <meta name="description" content="在使用Instrumnents对程序进行内存测试的时候，发现有几处异常处理的地方提示内存泄露。经过分析得知，因为异常处理，改变代码执行路径，导致编译生成的 release 代码没有执行。 ">
+  <meta name="description" content="NSTimer是ios上比较常用的定时器组件，在使用了一段时间后，发现有些地方是需要注意一下的。 NSTimer 是需要配合NSRunLoop 才可以正常工作的。 + (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)seconds &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -76,6 +76,58 @@
       
   <header>
     
+      <h1 class="entry-title"><a href="/blog/2016/03/21/nstimer-retain-target/">NSTimer 使用注意事项</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-03-21T23:13:50+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2016</span></span> <span class='time'>11:13 pm</span></time>
+        
+        
+            | <a href="/blog/2016/03/21/nstimer-retain-target/#comments">评论</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>NSTimer是ios上比较常用的定时器组件，在使用了一段时间后，发现有些地方是需要注意一下的。</p>
+
+<ol>
+<li><p>NSTimer 是需要配合NSRunLoop 才可以正常工作的。</p>
+
+<pre><code class="` "> + (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)seconds
+                              invocation:(NSInvocation *)invocation
+                                 repeats:(BOOL)repeats
+
+ + (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti 
+                                       target:(id)aTarget 
+                                     selector:(SEL)aSelector 
+                                     userInfo:(nullable id)userInfo 
+                                     repeats:(BOOL)yesOrNo;
+</code></pre>
+
+<p> 使用这个类方法，会自动添加到当前的RunLoop里面。关于RunLoop的介绍网上有很多资料，推荐看看 <a href="http://blog.ibireme.com/2015/05/18/runloop/">深入理解RunLoop</a>。
+ </div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/03/21/nstimer-retain-target/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
       <h1 class="entry-title"><a href="/blog/2016/03/13/arc-nsexception-cause-memory-leak/">Arc下NSException有可能会内存泄露</a></h1>
     
     
@@ -119,6 +171,10 @@
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/03/21/nstimer-retain-target/">NSTimer 使用注意事项</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/03/13/arc-nsexception-cause-memory-leak/">Arc下NSException有可能会内存泄露</a>

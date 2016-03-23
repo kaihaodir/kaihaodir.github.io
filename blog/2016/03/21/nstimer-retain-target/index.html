@@ -1,0 +1,315 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>NSTimer 使用注意事项 - Thinking...</title>
+  <meta name="author" content="Kai">
+
+  
+  <meta name="description" content="NSTimer是ios上比较常用的定时器组件，在使用了一段时间后，发现有些地方是需要注意一下的。 NSTimer 是需要配合NSRunLoop 才可以正常工作的。 + (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)seconds &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://kaihaodir.github.io/blog/2016/03/21/nstimer-retain-target/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Thinking..." type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script> -->
+  <script src="//ajax.useso.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+-->
+<link href="http://fonts.useso.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.useso.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Thinking...</a></h1>
+  
+    <h2>~宝剑锋从磨砺出,梅花香自苦寒来~</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="kaihaodir.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">NSTimer 使用注意事项</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-03-21T23:13:50+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2016</span></span> <span class='time'>11:13 pm</span></time>
+        
+        
+            | <a href="#comments">评论</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>NSTimer是ios上比较常用的定时器组件，在使用了一段时间后，发现有些地方是需要注意一下的。</p>
+
+<ol>
+<li><p>NSTimer 是需要配合NSRunLoop 才可以正常工作的。</p>
+
+<pre><code class="` "> + (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)seconds
+                              invocation:(NSInvocation *)invocation
+                                 repeats:(BOOL)repeats
+
+ + (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti 
+                                       target:(id)aTarget 
+                                     selector:(SEL)aSelector 
+                                     userInfo:(nullable id)userInfo 
+                                     repeats:(BOOL)yesOrNo;
+</code></pre>
+
+<p> 使用这个类方法，会自动添加到当前的RunLoop里面。关于RunLoop的介绍网上有很多资料，推荐看看 <a href="http://blog.ibireme.com/2015/05/18/runloop/">深入理解RunLoop</a>。
+ <!--MORE--></p></li>
+<li><p>当RunLoop处于UITrackingRunLoopMode模式的时候（滑动UIScrollView的时候），使用</p>
+
+<pre><code>scheduledTimerWithTimeInterval:(NSTimeInterval)seconds
+                    invocation:(NSInvocation *)invocation
+                       repeats:(BOOL)repeats
+</code></pre>
+
+<p>的类方法创建的Timer，是不会收到响应事件。只有RunLoop切换到Default模式时才可以正常响应。如果希望滑动时也可以响应Timer时间，需要把Timer加到RunLoop并指定模式为<strong>NSRunLoopCommonModes</strong></p>
+
+<pre><code>NSTimer *timer = [NSTimer timerWithTimeInterval:0.5 target:self selector:@selector(test) userInfo:nil repeats:YES];
+[[NSRunLoop mainRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];
+</code></pre></li>
+<li><p>NSTimer 会强引用 target 对象，很容易造成内存泄露或者其它因生命周期和预期不一至导致的问题。</p>
+
+<p> 我们先看一段常见的事例代码</p>
+
+<pre><code class="`"> @implementation TViewController
+ {
+     NSTimer *_timer;
+ }
+
+ - (void)dealloc
+ {
+     NSLog(@"%s", __func__);
+ }
+
+ - (void)viewDidLoad
+ {
+     [super viewDidLoad];
+     _timer = [NSTimer scheduledTimerWithTimeInterval:1
+                                               target:self 
+                                             selector:@selector(onTimeout) 
+                                             userInfo:nil 
+                                              repeats:YES];
+ }
+
+ - (void)onTimeout
+ {
+     NSLog(@"%s", __func__);
+ }
+
+ @end
+</code></pre>
+
+<p> 大家可能会觉得，当这个ViewController被 pop 掉后会正常释放，timer 也会停掉。但实际的情况不是你想的那样。以下log是Push这个ViewController后，然后点击返回的过程。</p>
+
+<p> 2016-03-24 00:42:19.663 NSTimerDemo[14916:3982566] -[TViewController onTimeout]
+ 2016-03-24 00:42:20.663 NSTimerDemo[14916:3982566] -[TViewController onTimeout]
+ 2016-03-24 00:42:21.663 NSTimerDemo[14916:3982566] -[TViewController onTimeout]
+ 2016-03-24 00:42:22.663 NSTimerDemo[14916:3982566] -[TViewController onTimeout]
+ <strong>2016-03-24 00:42:23.369 NSTimerDemo[14916:3982566] -[TViewController viewDidDisappear:]</strong>
+ 2016-03-24 00:42:23.663 NSTimerDemo[14916:3982566] -[TViewController onTimeout]
+ 2016-03-24 00:42:24.663 NSTimerDemo[14916:3982566] -[TViewController onTimeout]
+ 2016-03-24 00:42:25.663 NSTimerDemo[14916:3982566] -[TViewController onTimeout]</p>
+
+<p> 从日志上来看，dealloc方法确实没有执行，而且timer事件还一直在触发。</p>
+
+<p> OK,既然Timer强引用了ViewController，那把ViewController改成<strong>__weak</strong>不就是可以解决问题了？
+ 于是我们把创建Timer的代码改成</p>
+
+<pre><code class="`"> __weak typeof(self) weak_self = self;
+ _timer = [NSTimer scheduledTimerWithTimeInterval:1
+                                           target:weak_self
+                                         selector:@selector(onTimeout)
+                                         userInfo:nil
+                                          repeats:YES];
+</code></pre>
+
+<p> 发现输出的log和之前的一样，难道weak对象根本没起作用？
+ 用Instrement查看了一下内存情况，发现真的是Timer强引用Target对象</p>
+
+<p> <img src="http://7xryar.com1.z0.glb.clouddn.com/NSTimer-Retain-Target.png" alt="Timer Retain Target" /></p>
+
+<p> 目前主要是处于一个闭环（环形引用）的状态，我们要想办法打破这种状态，而且<strong>__weak</strong>设置给Timer也不会破坏Timer强引用Target。</p>
+
+<p> 于是，我们引用一个包装对象，让Timer强引用这个包装对象，包装对象弱引用Target(ViewController)
+ ViewController &mdash;> Timer &mdash;>Wrapper &hellip;>ViewController 这样就可以破坏环形引用。</p>
+
+<pre><code class="`"> @Interface Wrapper
+ @property (weak, nonatom) id target;
+ @end
+</code></pre>
+
+<p> 那么创建Timer的类方法的Target对象不是传<code>self</code>, 而是传 wrapper 对象。
+ 另外，wrapper对象还要把Timer的事件传递到真正的target上。</p>
+
+<p> 详细的 Timer Wrapper 可以看完代码 <a href="https://github.com/kaihaodir/BSUiKit/blob/master/BSTimer.h">BSTimer</a></p>
+
+<p> 最后其实可以用dispatch_time解决强引用问题，但是dispatch_time在暂停功能上处理起来比较麻烦。</p></li>
+</ol>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Kai</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-03-21T23:13:50+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2016</span></span> <span class='time'>11:13 pm</span></time>
+      
+
+
+    </p>
+    
+       <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/03/13/arc-nsexception-cause-memory-leak/" title="Previous Post: Arc下NSException有可能会内存泄露">&laquo; Arc下NSException有可能会内存泄露</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+    <h1>评论：</h1>
+    <div id="comments" aria-live="polite"><!-- 多说评论框 start -->
+<div class="ds-thread" data-thread-key="/blog/2016/03/21/nstimer-retain-target" data-title="NSTimer 使用注意事项" data-url="http://kaihaodir.github.io/blog/2016/03/21/nstimer-retain-target/"></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    var duoshuoQuery = {short_name:"likaihao"};
+    (function() {
+
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+     })();
+ </script>
+ <!-- 多说公共JS代码 end --></div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/03/21/nstimer-retain-target/">NSTimer 使用注意事项</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/03/13/arc-nsexception-cause-memory-leak/">Arc下NSException有可能会内存泄露</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="10" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+</section>
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Kai -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
