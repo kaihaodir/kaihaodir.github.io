@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: Ios | Thinking...]]></title>
-  <link href="http://kaihaodir.github.io/blog/categories/ios/atom.xml" rel="self"/>
+  <title><![CDATA[Category: Crash | Thinking...]]></title>
+  <link href="http://kaihaodir.github.io/blog/categories/crash/atom.xml" rel="self"/>
   <link href="http://kaihaodir.github.io/"/>
   <updated>2016-03-30T02:17:35+08:00</updated>
   <id>http://kaihaodir.github.io/</id>
@@ -132,86 +132,6 @@
 <li><p>在App初始化的时候，调用一下 ScrollView 的 swizzling 方法，就可以解决这类型的崩溃（包括：UITableView, UIWebView, UICollectionView 动画时delegate被释放引起的崩溃）</p></li>
 </ol>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Arc下NSException有可能会内存泄露]]></title>
-    <link href="http://kaihaodir.github.io/blog/2016/03/13/arc-nsexception-cause-memory-leak/"/>
-    <updated>2016-03-13T17:00:52+08:00</updated>
-    <id>http://kaihaodir.github.io/blog/2016/03/13/arc-nsexception-cause-memory-leak</id>
-    <content type="html"><![CDATA[<p>在使用Instrumnents对程序进行内存测试的时候，发现有几处异常处理的地方提示内存泄露。经过分析得知，<strong>因为异常处理，改变代码执行路径，导致编译生成的 release 代码没有执行</strong>。</p>
-
-<!--more-->
-
-
-<p>简单写了些测试代码验证：</p>
-
-<pre><code>- (void)viewDidLoad {
-
-    [super viewDidLoad];
-
-    @try {
-        NSMutableArray *stringList = [[NSMutableArray alloc] init];
-        for (int i = 0; i &lt; 100; i++) {
-            [stringList addObject: @"string instance."];
-        }
-        [self throwException];
-    }
-    @catch (NSException *exception) {
-        NSLog(@"catch Exception : %@", exception);
-    }
-    @finally {
-
-    }
-}
-
-- (void)throwException
-{
-    [NSException raise:@"An Exception." format:@"Exception Description."];
-}
-</code></pre>
-
-<p>反复进出这个页面几次后，在Instruments上果然看到提示内存泄露，而且泄露的地方就指明是 <code>@try{ }</code> 里面创建的对象。</p>
-
-<p><img src="http://7xryar.com1.z0.glb.clouddn.com/exception-memory-leak.png" alt="img" /></p>
-
-<h4>解决思路</h4>
-
-<p>1, 尽量不要在@try{}里面有操作，导致对象的引用引用计数增加。<code>@try{ }</code> 语句块里面只有有可能抛出异常的语句。</p>
-
-<p><strong>修改后的代码:</strong></p>
-
-<pre><code>- (void)viewDidLoad {
-
-    [super viewDidLoad];
-
-    NSMutableArray *stringList = [[NSMutableArray alloc] init];
-    for (int i = 0; i &lt; 100; i++) {
-        [stringList addObject: @"string instance."];
-    }
-
-    @try {
-        [self throwException];
-    }
-    @catch (NSException *exception) {
-        NSLog(@"catch Exception : %@", exception);
-    }
-    @finally {
-
-    }
-}
-</code></pre>
-
-<p>最后用Instruments检查一下，一切正常了。</p>
-
-<p>2, 查看了苹果的开发文档，发现有这么一段描述:</p>
-
-<blockquote><pre><code>By default in Objective C, ARC is not exception-safe for normal releases:
-It does not end the lifetime of __strong variables when their scopes are abnormally terminated by an exception.
-It does not perform releases which would occur at the end of a full-expression if that full-expression throws an exception.
-A program may be compiled with the option -fobjc-arc-exceptions in order to enable these, or with the option -fno-objc-arc-exceptions to explicitly disable them, with the last such argument “winning”.
-</code></pre></blockquote>
 ]]></content>
   </entry>
   

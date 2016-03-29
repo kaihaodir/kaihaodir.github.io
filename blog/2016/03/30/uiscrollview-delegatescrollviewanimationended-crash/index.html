@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Thinking...</title>
+  <title>_delegateScrollViewAnimationEnded Crash处理 - Thinking...</title>
   <meta name="author" content="Kai">
 
   
@@ -38,7 +38,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://kaihaodir.github.io/">
+  <link rel="canonical" href="http://kaihaodir.github.io/blog/2016/03/30/uiscrollview-delegatescrollviewanimationended-crash/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="Thinking..." type="application/atom+xml">
@@ -88,15 +88,12 @@
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2016/03/30/uiscrollview-delegatescrollviewanimationended-crash/">_delegateScrollViewAnimationEnded Crash处理</a></h1>
+      <h1 class="entry-title">_delegateScrollViewAnimationEnded Crash处理</h1>
     
     
       <p class="meta">
@@ -108,14 +105,14 @@
 <time class='entry-date' datetime='2016-03-30T00:57:31+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>30</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>12:57 am</span></time>
         
         
-            | <a href="/blog/2016/03/30/uiscrollview-delegatescrollviewanimationended-crash/#comments">评论</a>
+            | <a href="#comments">评论</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>在项目开发过程中，多次遇到UIScrollView滑动时引起的崩溃，在这里分析一下，mark 下处理过程。</p>
+<div class="entry-content"><p>在项目开发过程中，多次遇到UIScrollView滑动时引起的崩溃，在这里分析一下，mark 下处理过程。</p>
 
 <p>先看一下崩溃堆栈：</p>
 
@@ -159,112 +156,183 @@
 </span><span class='line'>    </span></code></pre></td></tr></table></div></figure>
 
 
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2016/03/30/uiscrollview-delegatescrollviewanimationended-crash/">Read on &rarr;</a>
-    </footer>
-  
+<!--MORE-->
 
 
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2016/03/21/nstimer-retain-target/">NSTimer 使用注意事项</a></h1>
-    
-    
-      <p class="meta">
-        
+<p>从崩溃信息里面，我们可以看到 <strong> stop reason = EXC_BAD_ACCESS </strong>， 非法地址访问（野指针）。从堆栈 <strong>[UIAnimator stopAnimation:] -> [UIScrollView(UIScrollViewInternal) _scrollViewAnimationEnded:finished:] </strong> 可以看出是动画完成后，调用scrollview的方法引起的非法访问。经过实验验证，是scrollview.delegate 引起的。 <strong>也就是说，scrollview在做动画的过程中，scrollview.delegate 被释放了。</strong>*</p>
+
+<p>简单写了一些测试代码重现了这个崩溃</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>@implementation ScrollViewController
+</span><span class='line'>
+</span><span class='line'>- (IBAction)onBackClick:(id)sender
+</span><span class='line'>{
+</span><span class='line'>    [self.scrollview setContentOffset:CGPointMake(0, self.scrollview.bounds.size.height * 3) animated:YES];
+</span><span class='line'>    [self.navigationController popViewControllerAnimated:NO];
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
 
 
+<ul>
+<li>在iOS7 和 iOS8 的系统下，一点返回按钮，pop 出当前页面，就会马上崩溃。</li>
+<li>在iOS9下没有问题（由于属性修饰符改成weak）</li>
+</ul>
 
 
-<time class='entry-date' datetime='2016-03-21T23:13:50+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2016</span></span> <span class='time'>11:13 pm</span></time>
-        
-        
-            | <a href="/blog/2016/03/21/nstimer-retain-target/#comments">评论</a>
-        
-      </p>
-    
-  </header>
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>//iOS9 以前
+</span><span class='line'>@property(nonatomic,unsafe_unretain) id&lt;UIScrollViewDelegate&gt; delegate; 
+</span><span class='line'>
+</span><span class='line'>//iOS9
+</span><span class='line'>@property(nullable,nonatomic,weak) id&lt;UIScrollViewDelegate&gt; delegate; 
+</span></code></pre></td></tr></table></div></figure>
 
 
-  <div class="entry-content"><p>NSTimer是ios上比较常用的定时器组件，在使用了一段时间后，发现有些地方是需要注意一下的。</p>
+<h3>解决方法：</h3>
+
+<p>崩溃的原因已经很明确，只要可以保证UIScrollView 的 delegate对象在释放的时候，把<code>scrollview.dlegate = nil;</code> 就可以解决问题。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>@implementation ScrollViewController
+</span><span class='line'>- (void)dealloc {
+</span><span class='line'>  self.scrollview.delegate = nil;
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p>主动设置 scrollview.delegate = nil; 可以很好的解决崩溃。但是稍不注意，项目组的其他开发同事又很容易忘记，或者一不小心，又引起崩溃了。有没有办法可以一劳永逸呢？</p>
+
+<h3>更好的解决方法：</h3>
+
+<p>主要思路：通过Runtime，修改 dealloc 方法，让代理对象在释放时自动把scrollview.delegate置空。</p>
 
 <ol>
-<li><p>NSTimer 是需要配合NSRunLoop 才可以正常工作的。</p>
+<li><p>首先，通过 <strong>method swizzling</strong> 给NSObject添加 deallocBlock <a href="https://github.com/kaihaodir/BSUiKit/blob/master/NSObject%2BDealloc.m">查看完成代码</a></p>
 
-<pre><code class="` "> + (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)seconds
-                              invocation:(NSInvocation *)invocation
-                                 repeats:(BOOL)repeats
+<pre><code class="`"> typedef void (^DeallocCallback)();
 
- + (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti 
-                                       target:(id)aTarget 
-                                     selector:(SEL)aSelector 
-                                     userInfo:(nullable id)userInfo 
-                                     repeats:(BOOL)yesOrNo;
-</code></pre>
+ @interface NSObject(Deallocing)
 
-<p> 使用这个类方法，会自动添加到当前的RunLoop里面。关于RunLoop的介绍网上有很多资料，推荐看看 <a href="http://blog.ibireme.com/2015/05/18/runloop/">深入理解RunLoop</a>。
- </div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2016/03/21/nstimer-retain-target/">Read on &rarr;</a>
-    </footer>
-  
+ + (void)hookNSObjectDealloc;
+
+ - (void)setDeallocCallback:(DeallocCallback)callback;
+
+ - (DeallocCallback)deallocCallback;
+
+ @end
 
 
-    </article>
-  
-  
-    <article>
+
+ @implementation NSObject(Deallocing)
+ - (void)myselfDealloc {
+     DeallocCallback callback = [self deallocCallback];
+     if (callback) {
+         callback(); //对象释放前的主要操作
+     }
+
+ [self originalDealloc];
+ }
+ @end
+</code></pre></li>
+<li><p>通过<strong>method swizzling</strong> 修改UIScrollView 的 <strong>setDelegate</strong> 方法</p>
+
+<pre><code class="`"> - (void)myselfSetDelegate:(NSObject *)delegate
+ {
+     if (delegate) {
+         UIScrollView * __weak weak_self = (UIScrollView *)self;
+         [delegate setDeallocCallback:^{
+             weak_self.delegate = nil;
+         }];
+     }
+     //调用原来方法
+     [self originalSetDelegate:delegate];
+ }   
+</code></pre></li>
+<li><p>在App初始化的时候，调用一下 ScrollView 的 swizzling 方法，就可以解决这类型的崩溃（包括：UITableView, UIWebView, UICollectionView 动画时delegate被释放引起的崩溃）</p></li>
+</ol>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
       
-  <header>
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Kai</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-03-30T00:57:31+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>30</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>12:57 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/crash/'>crash</a>, <a class='category' href='/blog/categories/ios/'>ios</a>
+  
+</span>
+
+
+    </p>
     
-      <h1 class="entry-title"><a href="/blog/2016/03/13/arc-nsexception-cause-memory-leak/">Arc下NSException有可能会内存泄露</a></h1>
+       <div class="sharing">
+  
+  
+  
+</div>
+
     
-    
-      <p class="meta">
-        
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/03/21/nstimer-retain-target/" title="Previous Post: NSTimer 使用注意事项">&laquo; NSTimer 使用注意事项</a>
+      
+      
+    </p>
+  </footer>
+</article>
 
 
+  <section>
+    <h1>评论：</h1>
+    <div id="comments" aria-live="polite"><!-- 多说评论框 start -->
+<div class="ds-thread" data-thread-key="/blog/2016/03/30/uiscrollview-delegatescrollviewanimationended-crash" data-title="_delegateScrollViewAnimationEnded Crash处理" data-url="http://kaihaodir.github.io/blog/2016/03/30/uiscrollview-delegatescrollviewanimationended-crash/"></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    var duoshuoQuery = {short_name:"likaihao"};
+    (function() {
 
-
-<time class='entry-date' datetime='2016-03-13T17:00:52+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>5:00 pm</span></time>
-        
-        
-            | <a href="/blog/2016/03/13/arc-nsexception-cause-memory-leak/#comments">评论</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>在使用Instrumnents对程序进行内存测试的时候，发现有几处异常处理的地方提示内存泄露。经过分析得知，<strong>因为异常处理，改变代码执行路径，导致编译生成的 release 代码没有执行</strong>。</p>
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+     })();
+ </script>
+ <!-- 多说公共JS代码 end --></div>
+  </section>
 
 </div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2016/03/13/arc-nsexception-cause-memory-leak/">Read on &rarr;</a>
-    </footer>
-  
 
-
-    </article>
-  
-  <div class="pagination">
-    
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
-</div>
 <aside class="sidebar">
   
     <section>
@@ -293,22 +361,10 @@
 <h1>Recent Comments</h1>
 <ul class="ds-recent-comments" data-num-items="10" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
 
-<!--多说js加载开始，一个页面只需要加载一次 -->
-<script type="text/javascript">
-  var duoshuoQuery = {short_name:"likaihao"};
-  (function() {
-    var ds = document.createElement('script');
-    ds.type = 'text/javascript';ds.async = true;
-    ds.src = 'http://static.duoshuo.com/embed.js';
-    ds.charset = 'UTF-8';
-    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ds);
-  })();
-</script>
-<!--多说js加载结束，一个页面只需要加载一次 -->
-
 </section>
   
 </aside>
+
 
     </div>
   </div>
