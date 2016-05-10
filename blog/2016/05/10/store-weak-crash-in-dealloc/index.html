@@ -1,0 +1,450 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Dealloc 时取 Weak Self 时崩溃 - Thinking...</title>
+  <meta name="author" content="Kai">
+
+  
+  <meta name="description" content="今天无意这中遇到一个奇怪的崩溃，先上引起崩溃的代码： 1
+2
+3
+4
+5
+- (void)dealloc
+{ __weak __typeof(self)weak_self = self; NSLog(@"%@", weak_self);
+} 当执行到dealloc的时候，程序就crash 掉了。 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://kaihaodir.github.io/blog/2016/05/10/store-weak-crash-in-dealloc/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Thinking..." type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script> -->
+  <script src="//ajax.useso.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+-->
+<link href="http://fonts.useso.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.useso.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Thinking...</a></h1>
+  
+    <h2>~宝剑锋从磨砺出,梅花香自苦寒来~</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="kaihaodir.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Dealloc 时取 Weak Self 时崩溃</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-05-10T15:15:20+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>10</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>3:15 pm</span></time>
+        
+        
+            | <a href="#comments">评论</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>今天无意这中遇到一个奇怪的崩溃，先上引起崩溃的代码：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)dealloc
+</span><span class='line'>{
+</span><span class='line'>    __weak __typeof(self)weak_self = self;
+</span><span class='line'>    NSLog(@"%@", weak_self);
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>当执行到dealloc的时候，程序就crash 掉了。</p>
+
+<!--MORE-->
+
+
+<p> 崩溃信息如下：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>objc[4572]: Cannot form weak reference to instance (0x160f6f890) of class MFChatRoomBoardController. It is possible that this object was over-released, or is in the process of deallocation.
+</span><span class='line'>(lldb) 
+</span><span class='line'>error: empty command
+</span><span class='line'>(lldb) bt
+</span><span class='line'>* thread #1: tid = 0x35914d, 0x0000000182307aac libobjc.A.dylib`_objc_trap(), queue = 'com.apple.main-thread', stop reason = EXC_BREAKPOINT (code=1, subcode=0x182307aac)
+</span><span class='line'>  * frame #0: 0x0000000182307aac libobjc.A.dylib`_objc_trap()
+</span><span class='line'>    frame #1: 0x0000000182307b24 libobjc.A.dylib`_objc_fatal(char const*, ...) + 88
+</span><span class='line'>    frame #2: 0x0000000182319890 libobjc.A.dylib`weak_register_no_lock + 316
+</span><span class='line'>    frame #3: 0x0000000182320688 libobjc.A.dylib`objc_initWeak + 224
+</span><span class='line'>    frame #4: 0x000000010022bf8c MakeFriends`-[MFChatRoomBoardController dealloc](self=0x0000000160f6f890, _cmd="dealloc") + 36 at MFChatRoomBoardController.m:31
+</span><span class='line'>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其中，可以在控制台明确看到这样一段描述:</p>
+
+<blockquote><p>objc[4572]: Cannot form weak reference to instance (0x160f6f890) of class MFChatRoomBoardController. It is possible that this object was over-released, or is in the process of deallocation.</p></blockquote>
+
+<p>说明不允许在 dealloc 的时候取 weak self.</p>
+
+<p>查看了一下 <code>weak_register_no_lock</code> 的函数代码，找到问题所在。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>id 
+</span><span class='line'>weak_register_no_lock(weak_table_t *weak_table, id referent_id, id *referrer_id)
+</span><span class='line'>{
+</span><span class='line'>    objc_object *referent = (objc_object *)referent_id;
+</span><span class='line'>    objc_object **referrer = (objc_object **)referrer_id;
+</span><span class='line'>
+</span><span class='line'>    if (!referent  ||  referent-&gt;isTaggedPointer()) return referent_id;
+</span><span class='line'>
+</span><span class='line'>    // ensure that the referenced object is viable
+</span><span class='line'>    bool deallocating;
+</span><span class='line'>    if (!referent-&gt;ISA()-&gt;hasCustomRR()) {
+</span><span class='line'>        deallocating = referent-&gt;rootIsDeallocating();
+</span><span class='line'>    }
+</span><span class='line'>    else {
+</span><span class='line'>        BOOL (*allowsWeakReference)(objc_object *, SEL) = 
+</span><span class='line'>            (BOOL(*)(objc_object *, SEL))
+</span><span class='line'>            object_getMethodImplementation((id)referent, 
+</span><span class='line'>                                           SEL_allowsWeakReference);
+</span><span class='line'>        if ((IMP)allowsWeakReference == _objc_msgForward) {
+</span><span class='line'>            return nil;
+</span><span class='line'>        }
+</span><span class='line'>        deallocating =
+</span><span class='line'>            ! (*allowsWeakReference)(referent, SEL_allowsWeakReference);
+</span><span class='line'>    }
+</span><span class='line'>
+</span><span class='line'>    if (deallocating) {
+</span><span class='line'>        _objc_fatal("Cannot form weak reference to instance (%p) of "
+</span><span class='line'>                    "class %s. It is possible that this object was "
+</span><span class='line'>                    "over-released, or is in the process of deallocation.",
+</span><span class='line'>                    (void*)referent, object_getClassName((id)referent));
+</span><span class='line'>    }
+</span><span class='line'>
+</span><span class='line'>    // now remember it and where it is being stored
+</span><span class='line'>    weak_entry_t *entry;
+</span><span class='line'>    if ((entry = weak_entry_for_referent(weak_table, referent))) {
+</span><span class='line'>        append_referrer(entry, referrer);
+</span><span class='line'>    } 
+</span><span class='line'>    else {
+</span><span class='line'>        weak_entry_t new_entry;
+</span><span class='line'>        new_entry.referent = referent;
+</span><span class='line'>        new_entry.out_of_line = 0;
+</span><span class='line'>        new_entry.inline_referrers[0] = referrer;
+</span><span class='line'>        for (size_t i = 1; i &lt; WEAK_INLINE_COUNT; i++) {
+</span><span class='line'>            new_entry.inline_referrers[i] = nil;
+</span><span class='line'>        }
+</span><span class='line'>        
+</span><span class='line'>        weak_grow_maybe(weak_table);
+</span><span class='line'>        weak_entry_insert(weak_table, &new_entry);
+</span><span class='line'>    }
+</span><span class='line'>
+</span><span class='line'>    // Do not set *referrer. objc_storeWeak() requires that the 
+</span><span class='line'>    // value not change.
+</span><span class='line'>
+</span><span class='line'>    return referent_id;
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以看出，runtime 是通过检查引用计数的个数来判断对象是否在 deallocting， 然后通过</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>if (deallocating) {
+</span><span class='line'>    _objc_fatal("Cannot form weak reference to instance (%p) of "
+</span><span class='line'>                "class %s. It is possible that this object was "
+</span><span class='line'>                "over-released, or is in the process of deallocation.",
+</span><span class='line'>                (void*)referent, object_getClassName((id)referent));
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这段代码让程序crash。</p>
+
+<p>再看一下 _objc_fatal 这个函数</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>void _objc_fatal(const char *fmt, ...)
+</span><span class='line'>{
+</span><span class='line'>    va_list ap; 
+</span><span class='line'>    char *buf1;
+</span><span class='line'>    char *buf2;
+</span><span class='line'>
+</span><span class='line'>    va_start(ap,fmt); 
+</span><span class='line'>    vasprintf(&buf1, fmt, ap);
+</span><span class='line'>    va_end (ap);
+</span><span class='line'>
+</span><span class='line'>    asprintf(&buf2, "objc[%d]: %s\n", getpid(), buf1);
+</span><span class='line'>    _objc_syslog(buf2);
+</span><span class='line'>    _objc_crashlog(buf2);
+</span><span class='line'>
+</span><span class='line'>    _objc_trap();
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以看到这个函数实际会在控制台输出一段信息，然后调用 _bojc_trap() 引起 crash. 而最后一个函数调用刚好也对上我们之前的崩溃堆栈。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Kai</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-05-10T15:15:20+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>10</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>3:15 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/crash/'>crash</a>, <a class='category' href='/blog/categories/ios/'>ios</a>
+  
+</span>
+
+
+    </p>
+    
+       <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/03/30/uiscrollview-delegatescrollviewanimationended-crash/" title="Previous Post: _delegateScrollViewAnimationEnded Crash处理">&laquo; _delegateScrollViewAnimationEnded Crash处理</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+    <h1>评论：</h1>
+    <div id="comments" aria-live="polite"><!-- 多说评论框 start -->
+<div class="ds-thread" data-thread-key="/blog/2016/05/10/store-weak-crash-in-dealloc" data-title="Dealloc 时取 weak self 时崩溃 " data-url="http://kaihaodir.github.io/blog/2016/05/10/store-weak-crash-in-dealloc/"></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    var duoshuoQuery = {short_name:"likaihao"};
+    (function() {
+
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+     })();
+ </script>
+ <!-- 多说公共JS代码 end --></div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/05/10/store-weak-crash-in-dealloc/">Dealloc 时取 Weak Self 时崩溃</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/03/30/uiscrollview-delegatescrollviewanimationended-crash/">_delegateScrollViewAnimationEnded Crash处理</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/03/21/nstimer-retain-target/">NSTimer 使用注意事项</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/03/13/arc-nsexception-cause-memory-leak/">Arc下NSException有可能会内存泄露</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="10" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+</section>
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Kai -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
