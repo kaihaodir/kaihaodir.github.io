@@ -4,7 +4,7 @@
   <title><![CDATA[Thinking...]]></title>
   <link href="http://kaihaodir.github.io/atom.xml" rel="self"/>
   <link href="http://kaihaodir.github.io/"/>
-  <updated>2016-05-10T18:11:37+08:00</updated>
+  <updated>2016-05-25T01:25:57+08:00</updated>
   <id>http://kaihaodir.github.io/</id>
   <author>
     <name><![CDATA[Kai]]></name>
@@ -12,6 +12,348 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[找出引起异常的文字]]></title>
+    <link href="http://kaihaodir.github.io/blog/2016/05/25/debugfindcrashtext/"/>
+    <updated>2016-05-25T00:23:23+08:00</updated>
+    <id>http://kaihaodir.github.io/blog/2016/05/25/debugfindcrashtext</id>
+    <content type="html"><![CDATA[<p>大家可能都遇到过，一些比较特殊的字符，在排版的时候，或者在渲染的时候，会抛出异常。
+当我们调试的时候，加了异常断点，就会触发断点。
+这次主要是记录一下，当出现这种异常的时候，怎样把引起这个异常的文字找出来。</p>
+
+<p>我们先看一下出现这种异常时的堆栈信息</p>
+
+<!--MORE-->
+
+
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(lldb) bt
+</span><span class='line'>* thread #1: tid = 0x70ed65, 0x0000000118914c6b libc++abi.dylib`__cxa_throw, queue = 'com.apple.main-thread', stop reason = breakpoint 3.1
+</span><span class='line'>    frame #0: 0x0000000118914c6b libc++abi.dylib`__cxa_throw
+</span><span class='line'>    frame #1: 0x00000001311c782f libType1Scaler.dylib`TType1LWFNMultipleMasterHFMXTable::TType1LWFNMultipleMasterHFMXTable(TFontObjectSurrogate const&, int, short, short, int*) + 121
+</span><span class='line'>    frame #2: 0x00000001311c7756 libType1Scaler.dylib`TType1LWFNFont::CreateHFMXTable() const + 86
+</span><span class='line'>    frame #3: 0x00000001311c76f5 libType1Scaler.dylib`TType1HFMXTableSurrogate::TType1HFMXTableSurrogate(TType1PSFont const&) + 31
+</span><span class='line'>    frame #4: 0x00000001311c6ec9 libType1Scaler.dylib`TType1PSFont::GetFontInstanceSpec(TType1Transform const&, FixedPoint&, FixedPoint&, FixedPoint&, FixedPoint&, FixedPoint&, FixedRectangle&, FontMetrics&) const + 647
+</span><span class='line'>    frame #5: 0x00000001311c6be4 libType1Scaler.dylib`TType1Strike::GetSpecs(StrikeSpecs&) const + 100
+</span><span class='line'>    frame #6: 0x00000001311bff2d libType1Scaler.dylib`Type1GetStrikeSpecs(unsigned int, TStrikeDescription const*, StrikeSpecs*) + 48
+</span><span class='line'>    frame #7: 0x000000011aba87a0 libFontParser.dylib`TConcreteFontScaler::GetFontInfo(FPFontInfo*) const + 48
+</span><span class='line'>    frame #8: 0x000000011ab80525 libFontParser.dylib`TFPFont::FillFontInfo(TFPFontInfo&) const + 203
+</span><span class='line'>    frame #9: 0x000000011ab80412 libFontParser.dylib`TFPFont::GetFontInfo() const + 46
+</span><span class='line'>    frame #10: 0x000000011ab803de libFontParser.dylib`FPFontIsMonospaced + 9
+</span><span class='line'>    frame #11: 0x0000000113bf63cd CoreGraphics`get_font_info + 244
+</span><span class='line'>    frame #12: 0x0000000113b84b47 CoreGraphics`get_font_info + 63
+</span><span class='line'>    frame #13: 0x0000000113b84af9 CoreGraphics`CGFontGetNumberOfGlyphs + 9
+</span><span class='line'>    frame #14: 0x00000001168131ed CoreText`TBaseFont::CopyGraphicsFont() const + 43
+</span><span class='line'>    frame #15: 0x0000000116863446 CoreText`TBaseFont::CopyTable(unsigned int) const + 188
+</span><span class='line'>    frame #16: 0x00000001168476fc CoreText`TBaseFont::GetCmapTable() const + 60
+</span><span class='line'>    frame #17: 0x000000011685d7a2 CoreText`TBaseFont::GetUnicodeEncoding() const + 58
+</span><span class='line'>    frame #18: 0x000000011685c367 CoreText`TBaseFont::GetUnicodeCmapSubHeader(void const**) const + 29
+</span><span class='line'>    frame #19: 0x000000011685c506 CoreText`TBaseFont::CopyCharacterSet() const + 206
+</span><span class='line'>    frame #20: 0x000000011680a2c2 CoreText`TBaseFont::GetCharacterSetInternal() const + 42
+</span><span class='line'>    frame #21: 0x0000000116808211 CoreText`CompareCharSet(__CFCharacterSet const*, TBaseFont const*) + 17
+</span><span class='line'>    frame #22: 0x000000011680ff1d CoreText`TDescriptorSource::CopyDescriptorsForRequestFromArray(__CFArray const*, __CFDictionary const*, CFComparisonResult (*)(void const*, void const*, void*), void*, unsigned long, bool) const + 1325
+</span><span class='line'>    frame #23: 0x000000011680e47e CoreText`TDescriptorSource::CopyDescriptorsForRequest(__CFDictionary const*, __CFSet const*, CFComparisonResult (*)(void const*, void const*, void*), void*, unsigned long, TCFRef&lt;__CFArray const*&gt;*) const + 2374
+</span><span class='line'>    frame #24: 0x000000011680d747 CoreText`TDescriptorSource::CopySystemWideFallbackDescriptorForCharacters(TBaseFont const&, unsigned short const*, long, UIFontFlag, TCFRef&lt;__CFArray const*&gt;*) const + 681
+</span><span class='line'>    frame #25: 0x000000011680ee03 CoreText`TDescriptorSource::CopySystemWideFallbackDescriptorForString(TBaseFont const&, __CFString const*, CFRange, UIFontFlag, TCFRef&lt;__CFArray const*&gt;*) const + 199
+</span><span class='line'>    frame #26: 0x00000001167f9ab3 CoreText`TFontCascade::CreateSystemWideFallback(__CTFont const*, __CFString const*, CFRange) const + 115
+</span><span class='line'>    frame #27: 0x00000001167f99ad CoreText`TFontCascade::CreateFallback(__CTFont const*, __CFString const*, CTEmojiPolicy) const + 1525
+</span><span class='line'>    frame #28: 0x00000001167c9204 CoreText`TGlyphEncoder::AppendUnmappedCharRun(unsigned int, TCFRef&lt;CTRun*&gt;&, __CTFont const*, CFRange, CFRange, TGlyphList&lt;TDeletedGlyphIndex&gt;&, TGlyphList&lt;TDeletedGlyphIndex&gt;&, TFontCascade const&, TGlyphEncoder::ClusterMatching) + 510
+</span><span class='line'>    frame #29: 0x00000001167c8e93 CoreText`TGlyphEncoder::RunUnicodeEncoderRecursively(unsigned int, TCFRef&lt;CTRun*&gt;&&, __CTFont const*, CFRange, TGlyphList&lt;TDeletedGlyphIndex&gt;&, TGlyphList&lt;TDeletedGlyphIndex&gt;&, TFontCascade const*, TGlyphEncoder::ClusterMatching, bool) + 1819
+</span><span class='line'>    frame #30: 0x00000001167c8703 CoreText`TGlyphEncoder::RunUnicodeEncoder(TCFRef&lt;CTRun*&gt;&&, __CTFont const*, CFRange, TGlyphList&lt;TDeletedGlyphIndex&gt;&, TFontCascade const*) + 137
+</span><span class='line'>    frame #31: 0x00000001167c82e0 CoreText`TGlyphEncoder::EncodeChars(CFRange, TAttributes const&, TGlyphList&lt;TDeletedGlyphIndex&gt;&, TGlyphEncoder::Fallbacks) + 1684
+</span><span class='line'>    frame #32: 0x00000001167df8a8 CoreText`TTypesetterAttrString::Initialize(__CFAttributedString const*) + 526
+</span><span class='line'>    frame #33: 0x00000001167cbe34 CoreText`CTLineCreateWithAttributedString + 63
+</span><span class='line'>    frame #34: 0x000000011cdffe3e UIFoundation`__NSStringDrawingEngine + 9479
+</span><span class='line'>    frame #35: 0x000000011cdfd824 UIFoundation`-[NSString(NSExtendedStringDrawing) drawWithRect:options:attributes:context:] + 167
+</span><span class='line'>    frame #36: 0x0000000114d69b4b UIKit`-[UILabel _drawTextInRect:baselineCalculationOnly:] + 6596
+</span><span class='line'>    frame #37: 0x0000000114d6788a UIKit`-[UILabel drawTextInRect:] + 669
+</span><span class='line'>    frame #38: 0x0000000114d69caf UIKit`-[UILabel drawRect:] + 100
+</span><span class='line'>    frame #39: 0x0000000114bab3e5 UIKit`-[UIView(CALayerDelegate) drawLayer:inContext:] + 495
+</span><span class='line'>    frame #40: 0x00000001148237ea QuartzCore`-[CALayer drawInContext:] + 257
+</span><span class='line'>    frame #41: 0x000000011508ab47 UIKit`-[_UILabelContentLayer drawInContext:] + 197
+</span><span class='line'>    frame #42: 0x0000000114712faa QuartzCore`CABackingStoreUpdate_ + 2725
+</span><span class='line'>    frame #43: 0x00000001148234d4 QuartzCore`___ZN2CA5Layer8display_Ev_block_invoke + 68
+</span><span class='line'>    frame #44: 0x000000011482334a QuartzCore`CA::Layer::display_() + 1614
+</span><span class='line'>    frame #45: 0x0000000114817e87 QuartzCore`CA::Layer::display_if_needed(CA::Transaction*) + 293
+</span><span class='line'>    frame #46: 0x0000000114817f17 QuartzCore`CA::Layer::layout_and_display_if_needed(CA::Transaction*) + 35
+</span><span class='line'>    frame #47: 0x000000011480c3c9 QuartzCore`CA::Context::commit_transaction(CA::Transaction*) + 277
+</span><span class='line'>    frame #48: 0x000000011483a086 QuartzCore`CA::Transaction::commit() + 486
+</span><span class='line'>    frame #49: 0x000000011483a7f8 QuartzCore`CA::Transaction::observer_callback(__CFRunLoopObserver*, unsigned long, void*) + 92
+</span><span class='line'>    frame #50: 0x0000000118485c37 CoreFoundation`__CFRUNLOOP_IS_CALLING_OUT_TO_AN_OBSERVER_CALLBACK_FUNCTION__ + 23
+</span><span class='line'>    frame #51: 0x0000000118485ba7 CoreFoundation`__CFRunLoopDoObservers + 391
+</span><span class='line'>    frame #52: 0x000000011847b7fb CoreFoundation`__CFRunLoopRun + 1147
+</span><span class='line'>    frame #53: 0x000000011847b0f8 CoreFoundation`CFRunLoopRunSpecific + 488
+</span><span class='line'>    frame #54: 0x0000000119682ad2 GraphicsServices`GSEventRunModal + 161
+</span><span class='line'>    frame #55: 0x0000000114af0f09 UIKit`UIApplicationMain + 171
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>大致可以看到， 是UILabel在 <strong>drawTextInRect</strong>时，获取某些字元信息时出异常了。
+我们的目的就是想看一下到底是什么文字引起这个问题的。</p>
+
+<p>我们都知道 text 是存放在 UILabel.text 的属性上，第一印象都认为  <code>po self.text</code> 就可以看到罪魁祸首了。</p>
+
+<p>OK， 我们看一下实际输出结果。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(lldb) po self.text
+</span><span class='line'>error: use of undeclared identifier 'self'
+</span><span class='line'>error: 1 errors parsing expression</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以看到提示，没有找到 self ，因为当前栈帧已经去到</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>frame #0: 0x0000000118914c6b libc++abi.dylib`__cxa_throw
+</span><span class='line'>frame #1: 0x00000001311c782f libType1Scaler.dylib`TType1LWFNMultipleMasterHFMXTable::TType1LWFNMultipleMasterHFMXTable(TFontObjectSurrogate const&, int, short, short, int*) + 121
+</span><span class='line'> 
+</span><span class='line'> ``` 
+</span><span class='line'> 所以提示没找到self也是很正常， 那么我们切换一下当前堆栈，把它切换到 ``` [UILabel drawRect:] ``` 这个函数里面:
+</span><span class='line'> 
+</span><span class='line'> ```
+</span><span class='line'> UIKit`-[UILabel drawRect:]:
+</span><span class='line'>0x114d69c4b &lt;+0&gt;:   pushq  %rbp
+</span><span class='line'>0x114d69c4c &lt;+1&gt;:   movq   %rsp, %rbp
+</span><span class='line'>0x114d69c4f &lt;+4&gt;:   pushq  %rbx
+</span><span class='line'>0x114d69c50 &lt;+5&gt;:   subq   $0x48, %rsp
+</span><span class='line'>0x114d69c54 &lt;+9&gt;:   movq   %rdi, %rbx
+</span><span class='line'>0x114d69c57 &lt;+12&gt;:  testq  %rbx, %rbx
+</span><span class='line'>0x114d69c5a &lt;+15&gt;:  je     0x114d69c71               ; &lt;+38&gt;
+</span><span class='line'>0x114d69c5c &lt;+17&gt;:  movq   0xa6c4ad(%rip), %rdx      ; "bounds"
+</span><span class='line'>0x114d69c63 &lt;+24&gt;:  leaq   -0x30(%rbp), %rdi
+</span><span class='line'>0x114d69c67 &lt;+28&gt;:  movq   %rbx, %rsi
+</span><span class='line'>0x114d69c6a &lt;+31&gt;:  callq  0x1155c2af6               ; symbol stub for: objc_msgSend_stret
+</span><span class='line'>0x114d69c6f &lt;+36&gt;:  jmp    0x114d69c7c               ; &lt;+49&gt;
+</span><span class='line'>0x114d69c71 &lt;+38&gt;:  xorps  %xmm0, %xmm0
+</span><span class='line'>0x114d69c74 &lt;+41&gt;:  movaps %xmm0, -0x20(%rbp)
+</span><span class='line'>0x114d69c78 &lt;+45&gt;:  movaps %xmm0, -0x30(%rbp)
+</span><span class='line'>0x114d69c7c &lt;+49&gt;:  movq   0xa7cdd5(%rip), %rsi      ; "drawTextInRect:"
+</span><span class='line'>0x114d69c83 &lt;+56&gt;:  movq   -0x18(%rbp), %rax
+</span><span class='line'>0x114d69c87 &lt;+60&gt;:  movq   %rax, 0x18(%rsp)
+</span><span class='line'>0x114d69c8c &lt;+65&gt;:  movq   -0x20(%rbp), %rax
+</span><span class='line'>0x114d69c90 &lt;+69&gt;:  movq   %rax, 0x10(%rsp)
+</span><span class='line'>0x114d69c95 &lt;+74&gt;:  movq   -0x30(%rbp), %rax
+</span><span class='line'>0x114d69c99 &lt;+78&gt;:  movq   -0x28(%rbp), %rcx
+</span><span class='line'>0x114d69c9d &lt;+82&gt;:  movq   %rcx, 0x8(%rsp)
+</span><span class='line'>0x114d69ca2 &lt;+87&gt;:  movq   %rax, (%rsp)
+</span><span class='line'>0x114d69ca6 &lt;+91&gt;:  movq   %rbx, %rdi
+</span><span class='line'>0x114d69ca9 &lt;+94&gt;:  callq  *0xaf0531(%rip)           ; (void *)0x0000000117c64800: objc_msgSend
+</span><span class='line'>0x114d69caf &lt;+100&gt;: addq   $0x48, %rsp
+</span><span class='line'>0x114d69cb3 &lt;+104&gt;: popq   %rbx
+</span><span class='line'>0x114d69cb4 &lt;+105&gt;: popq   %rbp
+</span><span class='line'>0x114d69cb5 &lt;+106&gt;: retq   </span></code></pre></td></tr></table></div></figure>
+
+
+<p>再看看结果：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(lldb) po self.text
+</span><span class='line'>error: use of undeclared identifier 'self'
+</span><span class='line'>error: 1 errors parsing expression
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>同样，也是没有找到self标识符。但是我们从上面的汇编代码可以看到，在调用 drawTextInRext 的时候，实际上最后也是调用 <code>objc_msgSend</code> 这个函数。</p>
+
+<p>然后我们再看一下 <code>objc_msgSend</code> 的函数原型：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>OBJC_EXPORT id objc_msgSend(id self, SEL op, ...)
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以清楚的看到，传给objc_msgSend的第一个参数就是 self 对象。</p>
+
+<p>而且从</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>0x114d69c7c &lt;+49&gt;:  movq   0xa7cdd5(%rip), %rsi      ; "drawTextInRect:"
+</span><span class='line'>0x114d69c83 &lt;+56&gt;:  movq   -0x18(%rbp), %rax
+</span><span class='line'>0x114d69c87 &lt;+60&gt;:  movq   %rax, 0x18(%rsp)
+</span><span class='line'>0x114d69c8c &lt;+65&gt;:  movq   -0x20(%rbp), %rax
+</span><span class='line'>0x114d69c90 &lt;+69&gt;:  movq   %rax, 0x10(%rsp)
+</span><span class='line'>0x114d69c95 &lt;+74&gt;:  movq   -0x30(%rbp), %rax
+</span><span class='line'>0x114d69c99 &lt;+78&gt;:  movq   -0x28(%rbp), %rcx
+</span><span class='line'>0x114d69c9d &lt;+82&gt;:  movq   %rcx, 0x8(%rsp)
+</span><span class='line'>0x114d69ca2 &lt;+87&gt;:  movq   %rax, (%rsp)
+</span><span class='line'>0x114d69ca6 &lt;+91&gt;:  movq   %rbx, %rdi
+</span><span class='line'>0x114d69ca9 &lt;+94&gt;:  callq  *0xaf0531(%rip)           ; (void *)0x0000000117c64800: objc_msgSend
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这里可以看到， 在 drawRect 里面，实际上是调用了 <code>drawTextInRect</code>,根据一些调用约定，可以判断 <code>objc_msgSend</code> 的第一个参数是最后压栈的，这时候我们可以猜测就是 <strong>rbx</strong>的寄存器的值。</p>
+
+<p>我们可以通过 <strong>register read</strong> 指令查看当前寄存器的值。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(lldb) register read
+</span><span class='line'>General Purpose Registers:
+</span><span class='line'>       rbx = 0x00007f9f833d71e0
+</span><span class='line'>       rbp = 0x00007fff5096bf70
+</span><span class='line'>       rsp = 0x00007fff5096bf20
+</span><span class='line'>       r12 = 0x00007f9f83102850
+</span><span class='line'>       r13 = 0x00007f9f833d71e0
+</span><span class='line'>       r14 = 0x0000000000000020
+</span><span class='line'>       r15 = 0x00007f9f80f119f0
+</span><span class='line'>       rip = 0x0000000114d69caf  UIKit`-[UILabel drawRect:] + 100
+</span><span class='line'>13 registers were unavailable.
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>然后我们尝试一下输出 rbx 的对象类型（如果它是一个对象的话）</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(lldb) po [(id)$rbx class]
+</span><span class='line'>UILabel
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以看到rbx就是我们要找的那个UILabel对象，既然找到UILabel，那么就很容易找到相应的 text 了。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(lldb) po [(id)$rbx text]
+</span><span class='line'>ᘡ ‍Amy🌀晴天冠 ୨୧˙˳⋆﻿
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以看到 <strong> ᘡ ‍Amy🌀晴天冠 ୨୧˙˳⋆﻿ </strong> 是这个文本引起异常。</p>
+
+<p>如果不好判断哪些寄存器是存放 self 对象的话，可以一个一个打印一下类型试试。</p>
+
+<h3>总结</h3>
+
+<ul>
+<li>很多时候异常了，而且不在我们的函数里面，这个时候直接取 self 是取不到的。</li>
+<li>所有方法最终都调用了<code>objc_msgSend</code>， 调用的对象会作为第一个参数（self）传给它。</li>
+<li>可以通过查看寄存器命令 <code>register read</code>， 获取到self地址。</li>
+<li>也可以通过<code>frame</code> 指令查看当前栈的参数信息。 具体可以看看 <code>help frame</code> 的输出信息。</li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Dealloc 时取 Weak Self 时崩溃]]></title>
