@@ -4,7 +4,7 @@
   <title><![CDATA[Thinking...]]></title>
   <link href="http://kaihaodir.github.io/atom.xml" rel="self"/>
   <link href="http://kaihaodir.github.io/"/>
-  <updated>2016-05-25T01:25:57+08:00</updated>
+  <updated>2016-06-03T16:44:53+08:00</updated>
   <id>http://kaihaodir.github.io/</id>
   <author>
     <name><![CDATA[Kai]]></name>
@@ -12,6 +12,244 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[LLDB Command]]></title>
+    <link href="http://kaihaodir.github.io/blog/2016/06/03/lldb-command/"/>
+    <updated>2016-06-03T16:36:26+08:00</updated>
+    <id>http://kaihaodir.github.io/blog/2016/06/03/lldb-command</id>
+    <content type="html"><![CDATA[<h3>设置断点：</h3>
+
+<ul>
+<li><p>对所有C函数 functionA 设置断点</p>
+
+<ul>
+<li><p>breakpoint set &ndash;name functionnameA &ndash;name functionNameB</p></li>
+<li><p>br s -n functionA</p></li>
+<li><p>b functionA</p></li>
+</ul>
+</li>
+</ul>
+
+
+<!--MORE-->
+
+
+<ul>
+<li><p>对FileA文件的LineNum行设置断点</p>
+
+<ul>
+<li><p>breakpoint set &ndash;file FileA &ndash;line LineNumber</p></li>
+<li><p>b fileA:LineNumber</p></li>
+</ul>
+</li>
+<li><p>C++ 函数， 对所有C++ 的 foo 函数设置断点</p>
+
+<ul>
+<li><p>breakpoint set &ndash;method foo</p></li>
+<li><p>br s -M foo</p></li>
+</ul>
+</li>
+<li><p>OC 对所有 aSelector 设置断点</p>
+
+<ul>
+<li><p>breakpoint set &ndash;selector aSelector</p></li>
+<li><p>br s -S aSelectro</p></li>
+</ul>
+</li>
+<li><p>设置 [NSString stringWithFormat] 断点</p>
+
+<ul>
+<li><p>breakpoint set &ndash;name &ldquo;-[NSString stringWithFormat:]&rdquo; (也是通过name的方式)</p></li>
+<li><p>b -[NSString stringWithFormat:]</p></li>
+</ul>
+</li>
+<li><p>可以添加 &ndash;shlib xxx.lib 来限制只设置这个模块的断点</p>
+
+<ul>
+<li><p>breakpoint set &ndash;name functionA &ndash;shlib foo.dylib</p></li>
+<li><p>breakpoint set -n functionA -s foo.dylib</p></li>
+</ul>
+</li>
+<li><p>设置条件断点</p>
+
+<ul>
+<li>breakpoint modify -c &lsquo;i == 10&rsquo;</li>
+</ul>
+</li>
+<li><p>命中n次后停止</p>
+
+<ul>
+<li>breakpoint modify -i n</li>
+</ul>
+</li>
+<li><p>当开始执行某个queue的时候停止</p>
+
+<ul>
+<li>breakpoint modify -q &lsquo;queue.name&rsquo;</li>
+</ul>
+</li>
+<li><p>显不所有断点</p>
+
+<ul>
+<li><p>breakpoint list</p></li>
+<li><p>br l</p></li>
+</ul>
+</li>
+<li><p>删除断点</p>
+
+<ul>
+<li><p>breakpoint delete 1.1</p></li>
+<li><p>br del 1.1</p></li>
+</ul>
+</li>
+<li><p>添加命令</p>
+
+<ul>
+<li><p> (lldb) breakpoint command add 1.1</p></li>
+<li><p>Enter your debugger command(s). Type &lsquo;DONE&rsquo; to end.</p></li>
+<li><p>bt</p></li>
+<li><p>DONE</p></li>
+</ul>
+</li>
+</ul>
+
+
+<h3>WatchPoint</h3>
+
+<ul>
+<li><p>当变量值改变时触发断点</p>
+
+<ul>
+<li>(lldb) watch set var global</li>
+</ul>
+</li>
+<li><p>添加条件,(当值改为5时才触发)</p>
+
+<ul>
+<li>(lldb) watch modify -c &lsquo;global == 5&rsquo;</li>
+</ul>
+</li>
+<li><p>当指针指向的地址内存数据发生变化时触发</p>
+
+<ul>
+<li><p>watchpoint set expression &ndash; myptr</p></li>
+<li><p>wa s e &ndash; myptr</p></li>
+<li><p>如果没有指定 -x byte_size ，默认观察指针大小的区域</p></li>
+</ul>
+</li>
+</ul>
+
+
+<h3>查看内存</h3>
+
+<ul>
+<li><p>( lldb ) memory read &ndash;format x &ndash;size 4 0xbffff3c0</p>
+
+<ul>
+<li>以16进制格式显示0xbffff3c0开始的内存数据，数据是4个字节为一个单位的</li>
+</ul>
+</li>
+<li><p>(lldb)memory read &ndash;outfile /tmp/mem.bin &ndash;binary 0x1000 0x1200</p>
+
+<ul>
+<li>把0x100 到 0x1200的内存数据输出到文件</li>
+</ul>
+</li>
+</ul>
+
+
+<h3>修改内存</h3>
+
+<ul>
+<li><p>在bytes+1的地方写入一个字节的数据：10</p>
+
+<ul>
+<li>memory write &lsquo;bytes + 1&rsquo; 10</li>
+</ul>
+</li>
+<li><p>在bytes+1的地方写入大小为4字节的数据</p>
+
+<ul>
+<li>memory write -s 4 &lsquo;byte + 1&rsquo; 15</li>
+</ul>
+</li>
+<li><p>在bytes开始的8个字节写入1，2，3，4。每个数据2字节</p>
+
+<ul>
+<li>memory write -s 2 &lsquo;byte&rsquo; 1 2 3 4</li>
+</ul>
+</li>
+</ul>
+
+
+<h3>步进</h3>
+
+<ul>
+<li><p>代码级别单步执行</p>
+
+<ul>
+<li>step</li>
+</ul>
+</li>
+<li><p>代码级别执行洗一条语句</p>
+
+<ul>
+<li>next</li>
+</ul>
+</li>
+<li><p>指令级别单步</p>
+
+<ul>
+<li>stepi</li>
+</ul>
+</li>
+<li><p>指定级别执行下一条指令</p>
+
+<ul>
+<li>nexti</li>
+</ul>
+</li>
+<li><p>跳出当前帧函数</p>
+
+<ul>
+<li>finish</li>
+</ul>
+</li>
+</ul>
+
+
+<h3>其他</h3>
+
+<ul>
+<li><p>初始化时会读配置文件</p>
+
+<ul>
+<li>~/.lldbinit</li>
+</ul>
+</li>
+<li><p>可指定别名</p>
+
+<ol>
+<li>(lldb) command alias bfl breakpoint set -f %1 -l %2</li>
+<li>(lldb) bfl foo.c 12</li>
+</ol>
+</li>
+<li><p>查看当前堆栈</p>
+
+<p>  ﻿* thread backtrace</p>
+
+<p>  ﻿* bt</p></li>
+<li><p>切换当前堆栈帧</p>
+
+<p>  ﻿* frame select 3</p></li>
+<li><p>显示当前栈帧的参数和局部变量信息</p>
+
+<p>  ﻿* frame var -A</p></li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[找出引起异常的文字]]></title>
