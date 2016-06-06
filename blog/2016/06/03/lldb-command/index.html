@@ -217,6 +217,92 @@ b functionA 对FileA文件的LineNum行设置断点 &hellip;">
 </ul>
 
 
+<h3>流程控制</h3>
+
+<ul>
+<li><p>代码级别单步执行</p>
+
+<ul>
+<li>step</li>
+</ul>
+</li>
+<li><p>代码级别执行洗一条语句</p>
+
+<ul>
+<li>next</li>
+</ul>
+</li>
+<li><p>指令级别单步</p>
+
+<ul>
+<li>stepi</li>
+</ul>
+</li>
+<li><p>指定级别执行下一条指令</p>
+
+<ul>
+<li>nexti</li>
+</ul>
+</li>
+<li><p>跳出当前帧函数</p>
+
+<ul>
+<li>finish</li>
+</ul>
+</li>
+</ul>
+
+
+<h3>查看变量</h3>
+
+<ul>
+<li><p>查看当前堆栈</p>
+
+<ul>
+<li><p>thread backtrace</p></li>
+<li><p>bt</p></li>
+</ul>
+</li>
+<li><p>切换当前堆栈帧</p>
+
+<ul>
+<li>frame select 3</li>
+</ul>
+</li>
+<li><p>显示当前栈帧的参数和局部变量信息</p>
+
+<ul>
+<li>frame var -A</li>
+</ul>
+</li>
+<li><p>以16进制的格式，显示当前栈局部变量的值</p>
+
+<ul>
+<li><p>frame variable &ndash;format x bar</p></li>
+<li><p>f v -f x bar</p></li>
+</ul>
+</li>
+<li><p>显不当前文件的全局变量/静态变量</p>
+
+<ul>
+<li><p>target var</p></li>
+<li><p>ta var</p></li>
+</ul>
+</li>
+</ul>
+
+
+<h3>执行表达式</h3>
+
+<ul>
+<li><p>expr (int) printf (&ldquo;Print nine: %d.&rdquo;, 4 + 5)</p></li>
+<li><p>expr unsigned int $foo = 5</p></li>
+<li><p>调试状态下刷新界面</p>
+
+<p>  ﻿* e (void)[CATransation flush]</p></li>
+</ul>
+
+
 <h3>查看内存</h3>
 
 <ul>
@@ -259,37 +345,74 @@ b functionA 对FileA文件的LineNum行设置断点 &hellip;">
 </ul>
 
 
-<h3>步进</h3>
+<h3>寄存器</h3>
 
 <ul>
-<li><p>代码级别单步执行</p>
+<li><p>查看寄存器数据</p>
 
 <ul>
-<li>step</li>
+<li>register read</li>
 </ul>
 </li>
-<li><p>代码级别执行洗一条语句</p>
+<li><p>指定格式查看寄存器内容</p>
 
 <ul>
-<li>next</li>
+<li><p>register read &ndash;format x</p></li>
+<li><p>help format 可以查看相应的格式</p></li>
 </ul>
 </li>
-<li><p>指令级别单步</p>
+<li><p>修改寄存器数据</p>
 
 <ul>
-<li>stepi</li>
+<li><p>register write rax 123</p></li>
+<li><p>register write pc &lsquo;$pc + 8&rsquo;</p></li>
 </ul>
 </li>
-<li><p>指定级别执行下一条指令</p>
+<li><p>函数调用约定，返回值放在r0，前面3个参数放在r1 ~ r3 里面</p></li>
+</ul>
+
+
+<h3>汇编</h3>
 
 <ul>
-<li>nexti</li>
+<li><p>显示当前函数汇编代码</p>
+
+<ul>
+<li><p>disassemble &ndash;frame</p></li>
+<li><p>dis -f</p></li>
 </ul>
 </li>
-<li><p>跳出当前帧函数</p>
+<li><p>显示指定函数名的汇编代码</p>
 
 <ul>
-<li>finish</li>
+<li><p>disassemble &ndash;name main</p></li>
+<li><p>dis -n main</p></li>
+</ul>
+</li>
+<li><p>显示指定地址范围的汇编代码</p>
+
+<ul>
+<li>disassemble &ndash;start-address 0x1eb8 &ndash;end-address 0x1ec3</li>
+</ul>
+</li>
+<li><p>显示当前行的汇编代码</p>
+
+<ul>
+<li><p>disassemble &ndash;line</p></li>
+<li><p>dis -l</p></li>
+</ul>
+</li>
+<li><p>源代码和汇编代码混合显示</p>
+
+<ul>
+<li><p>disassemble  &ndash;frame &ndash;mixed</p></li>
+<li><p>dis -f -m</p></li>
+</ul>
+</li>
+<li><p>显示16进制opcode</p>
+
+<ul>
+<li>disassemble &ndash;frame &ndash;bytes</li>
 </ul>
 </li>
 </ul>
@@ -311,17 +434,6 @@ b functionA 对FileA文件的LineNum行设置断点 &hellip;">
 <li>(lldb) bfl foo.c 12</li>
 </ol>
 </li>
-<li><p>查看当前堆栈</p>
-
-<p>  ﻿* thread backtrace</p>
-
-<p>  ﻿* bt</p></li>
-<li><p>切换当前堆栈帧</p>
-
-<p>  ﻿* frame select 3</p></li>
-<li><p>显示当前栈帧的参数和局部变量信息</p>
-
-<p>  ﻿* frame var -A</p></li>
 </ul>
 
 </div>
@@ -341,6 +453,12 @@ b functionA 对FileA文件的LineNum行设置断点 &hellip;">
 
 <time class='entry-date' datetime='2016-06-03T16:36:26+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>3</span><span class='date-suffix'>rd</span>, <span class='date-year'>2016</span></span> <span class='time'>4:36 pm</span></time>
       
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/debug/'>debug</a>
+  
+</span>
 
 
     </p>
