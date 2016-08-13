@@ -4,7 +4,7 @@
   <title><![CDATA[Thinking...]]></title>
   <link href="http://kaihaodir.github.io/atom.xml" rel="self"/>
   <link href="http://kaihaodir.github.io/"/>
-  <updated>2016-08-13T17:17:58+08:00</updated>
+  <updated>2016-08-13T17:21:45+08:00</updated>
   <id>http://kaihaodir.github.io/</id>
   <author>
     <name><![CDATA[Kai]]></name>
@@ -63,7 +63,6 @@
 <span class='line-number'>39</span>
 <span class='line-number'>40</span>
 <span class='line-number'>41</span>
-<span class='line-number'>42</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'>
 </span><span class='line'>@implementation LogicHandle
 </span><span class='line'>
@@ -97,7 +96,6 @@
 </span><span class='line'>}
 </span><span class='line'>
 </span><span class='line'>@end
-</span><span class='line'>
 </span><span class='line'>//Post通知代码
 </span><span class='line'>- (void)postNotificationInBackground
 </span><span class='line'>{
@@ -107,6 +105,9 @@
 </span><span class='line'>}
 </span><span class='line'>
 </span></code></pre></td></tr></table></div></figure>
+
+
+<!--MORE-->
 
 
 <p>常规的通知接收模型大致都是这样格式，但是这种方式在处理多线程的调用时会有问题。</p>

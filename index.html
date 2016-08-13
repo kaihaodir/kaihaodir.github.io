@@ -49,8 +49,7 @@
 38
 39
 40
-41
-42 @ &hellip;">
+41 @ &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -181,7 +180,6 @@
 <span class='line-number'>39</span>
 <span class='line-number'>40</span>
 <span class='line-number'>41</span>
-<span class='line-number'>42</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'>
 </span><span class='line'>@implementation LogicHandle
 </span><span class='line'>
@@ -215,7 +213,6 @@
 </span><span class='line'>}
 </span><span class='line'>
 </span><span class='line'>@end
-</span><span class='line'>
 </span><span class='line'>//Post通知代码
 </span><span class='line'>- (void)postNotificationInBackground
 </span><span class='line'>{
@@ -227,54 +224,12 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>常规的通知接收模型大致都是这样格式，但是这种方式在处理多线程的调用时会有问题。</p>
-
-<p>由于PostNotification是在另一个线程的，所以 <code>onNotification</code> 也会在另一个线程执行。 这个时候很多人会认为是不是多线程访问对象引起的崩溃？那加个锁可以解决问题吗？</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)onNotification
-</span><span class='line'>{
-</span><span class='line'>  @synchronized (self) {
-</span><span class='line'>      xxx;
-</span><span class='line'>      xxx;
-</span><span class='line'>  }
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
-
-
-<p>没错， 多线程访问数据时会有问题，但很明显这里只是输出一下 self， 并没有涉及到数据的修改，所以这种方式的加锁是不能解决问题的。</p>
-
-<p>主要原因是当后台线程在执行 <code>onNotification</code> 方法的时候，执行到一半，其他线程把对象释放了。</p>
-
-<h3>解决方法：</h3>
-
-<ul>
-<li>保证在同一线程发通知</li>
-<li>如果要支持多线程调用，可以用 &ldquo;强引用&rdquo; 确保对象不被释放。</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)mutithread_message
-</span><span class='line'>{
-</span><span class='line'>  __strong __typeof(self) strongSelf = self;
-</span><span class='line'>  [strongSelf op];
-</span><span class='line'>}
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>这种其实就是 block 里面常规的  weak-strong 的写法，只是很少会直接写到函数里面。</p>
 </div>
   
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/08/13/mutithread-notification-crash/">Read on &rarr;</a>
+    </footer>
   
 
 
