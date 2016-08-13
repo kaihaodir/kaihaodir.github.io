@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Arc下NSException有可能会内存泄露 - Thinking...</title>
+  <title>多线程下通知响应函数Crash - Thinking...</title>
   <meta name="author" content="Kai">
 
   
-  <meta name="description" content="在使用Instrumnents对程序进行内存测试的时候，发现有几处异常处理的地方提示内存泄露。经过分析得知，因为异常处理，改变代码执行路径，导致编译生成的 release 代码没有执行。 简单写了些测试代码验证： 1
+  <meta name="description" content="今天发现一个老问题引起的崩溃，记录一下。 先有问题的代码： 1
 2
 3
 4
@@ -25,7 +25,32 @@
 14
 15
 16
-17 &hellip;">
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42 @ &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -34,7 +59,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://kaihaodir.github.io/blog/2016/03/13/arc-nsexception-cause-memory-leak/">
+  <link rel="canonical" href="http://kaihaodir.github.io/blog/2016/08/13/mutithread-notification-crash/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="Thinking..." type="application/atom+xml">
@@ -89,7 +114,7 @@
   
   <header>
     
-      <h1 class="entry-title">Arc下NSException有可能会内存泄露</h1>
+      <h1 class="entry-title">多线程下通知响应函数Crash</h1>
     
     
       <p class="meta">
@@ -98,7 +123,7 @@
 
 
 
-<time class='entry-date' datetime='2016-03-13T17:00:52+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>5:00 pm</span></time>
+<time class='entry-date' datetime='2016-08-13T16:32:26+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>4:32 pm</span></time>
         
         
             | <a href="#comments">评论</a>
@@ -108,12 +133,9 @@
   </header>
 
 
-<div class="entry-content"><p>在使用Instrumnents对程序进行内存测试的时候，发现有几处异常处理的地方提示内存泄露。经过分析得知，<strong>因为异常处理，改变代码执行路径，导致编译生成的 release 代码没有执行</strong>。</p>
+<div class="entry-content"><p>今天发现一个老问题引起的崩溃，记录一下。</p>
 
-<!--more-->
-
-
-<p>简单写了些测试代码验证：</p>
+<p>先有问题的代码：</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -138,41 +160,73 @@
 <span class='line-number'>21</span>
 <span class='line-number'>22</span>
 <span class='line-number'>23</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)viewDidLoad {
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>
+</span><span class='line'>@implementation LogicHandle
+</span><span class='line'>
+</span><span class='line'>- (instancetype)init
+</span><span class='line'>{
+</span><span class='line'>    if (self = [super init]) {
+</span><span class='line'>        [[NSNotificationCenter defaultCenter] addObserver:self
+</span><span class='line'>                                                 selector:@selector(onNotification)
+</span><span class='line'>                                                     name:@"kLogicNotification" object:nil];
+</span><span class='line'>    }
 </span><span class='line'>    
-</span><span class='line'>    [super viewDidLoad];
-</span><span class='line'>    
-</span><span class='line'>    @try {
-</span><span class='line'>        NSMutableArray *stringList = [[NSMutableArray alloc] init];
-</span><span class='line'>        for (int i = 0; i &lt; 100; i++) {
-</span><span class='line'>            [stringList addObject: @"string instance."];
-</span><span class='line'>        }
-</span><span class='line'>        [self throwException];
-</span><span class='line'>    }
-</span><span class='line'>    @catch (NSException *exception) {
-</span><span class='line'>        NSLog(@"catch Exception : %@", exception);
-</span><span class='line'>    }
-</span><span class='line'>    @finally {
-</span><span class='line'>        
-</span><span class='line'>    }
+</span><span class='line'>    return self;
 </span><span class='line'>}
 </span><span class='line'>
-</span><span class='line'>- (void)throwException
+</span><span class='line'>- (void)dealloc
 </span><span class='line'>{
-</span><span class='line'>    [NSException raise:@"An Exception." format:@"Exception Description."];
+</span><span class='line'>    [[NSNotificationCenter defaultCenter] removeObserver:self];
 </span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>- (void)onNotification
+</span><span class='line'>{
+</span><span class='line'>    [self showLog];
+</span><span class='line'>    [self showLog];
+</span><span class='line'>    [self showLog];
+</span><span class='line'>    [self showLog];
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>- (void)showLog
+</span><span class='line'>{
+</span><span class='line'>  NSLog(@"%@", self);
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>@end
+</span><span class='line'>
+</span><span class='line'>//Post通知代码
+</span><span class='line'>- (void)postNotificationInBackground
+</span><span class='line'>{
+</span><span class='line'>    dispatch_sync(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+</span><span class='line'>        [[NSNotificationCenter defaultCenter] postNotificationName:kLogicNotification object:nil];
+</span><span class='line'>    });
+</span><span class='line'>}
+</span><span class='line'>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>反复进出这个页面几次后，在Instruments上果然看到提示内存泄露，而且泄露的地方就指明是 <code>@try{ }</code> 里面创建的对象。</p>
+<p>常规的通知接收模型大致都是这样格式，但是这种方式在处理多线程的调用时会有问题。</p>
 
-<p><img src="http://7xryar.com1.z0.glb.clouddn.com/exception-memory-leak.png" alt="img" /></p>
-
-<h4>解决思路</h4>
-
-<p>1, 尽量不要在@try{}里面有操作，导致对象的引用引用计数增加。<code>@try{ }</code> 语句块里面只有有可能抛出异常的语句。</p>
-
-<p><strong>修改后的代码:</strong></p>
+<p>由于PostNotification是在另一个线程的，所以 <code>onNotification</code> 也会在另一个线程执行。 这个时候很多人会认为是不是多线程访问对象引起的崩溃？那加个锁可以解决问题吗？</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -181,49 +235,41 @@
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)viewDidLoad {
-</span><span class='line'>    
-</span><span class='line'>    [super viewDidLoad];
-</span><span class='line'>    
-</span><span class='line'>    NSMutableArray *stringList = [[NSMutableArray alloc] init];
-</span><span class='line'>    for (int i = 0; i &lt; 100; i++) {
-</span><span class='line'>        [stringList addObject: @"string instance."];
-</span><span class='line'>    }
-</span><span class='line'>    
-</span><span class='line'>    @try {
-</span><span class='line'>        [self throwException];
-</span><span class='line'>    }
-</span><span class='line'>    @catch (NSException *exception) {
-</span><span class='line'>        NSLog(@"catch Exception : %@", exception);
-</span><span class='line'>    }
-</span><span class='line'>    @finally {
-</span><span class='line'>        
-</span><span class='line'>    }
+</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)onNotification
+</span><span class='line'>{
+</span><span class='line'>  @synchronized (self) {
+</span><span class='line'>      xxx;
+</span><span class='line'>      xxx;
+</span><span class='line'>  }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>没错， 多线程访问数据时会有问题，但很明显这里只是输出一下 self， 并没有涉及到数据的修改，所以这种方式的加锁是不能解决问题的。</p>
+
+<p>主要原因是当后台线程在执行 <code>onNotification</code> 方法的时候，执行到一半，其他线程把对象释放了。</p>
+
+<h3>解决方法：</h3>
+
+<ul>
+<li>保证在同一线程发通知</li>
+<li>如果要支持多线程调用，可以用 &ldquo;强引用&rdquo; 确保对象不被释放。</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)mutithread_message
+</span><span class='line'>{
+</span><span class='line'>  __strong __typeof(self) strongSelf = self;
+</span><span class='line'>  [strongSelf op];
 </span><span class='line'>}
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>最后用Instruments检查一下，一切正常了。</p>
-
-<p>2, 查看了苹果的开发文档，发现有这么一段描述:</p>
-
-<blockquote><pre><code>By default in Objective C, ARC is not exception-safe for normal releases:
-It does not end the lifetime of __strong variables when their scopes are abnormally terminated by an exception.
-It does not perform releases which would occur at the end of a full-expression if that full-expression throws an exception.
-A program may be compiled with the option -fobjc-arc-exceptions in order to enable these, or with the option -fno-objc-arc-exceptions to explicitly disable them, with the last such argument “winning”.
-</code></pre></blockquote>
+<p>这种其实就是 block 里面常规的  weak-strong 的写法，只是很少会直接写到函数里面。</p>
 </div>
 
 
@@ -239,14 +285,8 @@ A program may be compiled with the option -fobjc-arc-exceptions in order to enab
 
 
 
-<time class='entry-date' datetime='2016-03-13T17:00:52+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>5:00 pm</span></time>
+<time class='entry-date' datetime='2016-08-13T16:32:26+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>4:32 pm</span></time>
       
-
-<span class="categories">
-  
-    <a class='category' href='/blog/categories/ios/'>ios</a>
-  
-</span>
 
 
     </p>
@@ -260,8 +300,8 @@ A program may be compiled with the option -fobjc-arc-exceptions in order to enab
     
     <p class="meta">
       
+        <a class="basic-alignment left" href="/blog/2016/06/08/hook-nsarraym-objectatindex-keyboard-crash/" title="Previous Post: Hook __NSArrayM objectAtIndex caush UIKeyboardTaskEntry crash">&laquo; Hook __NSArrayM objectAtIndex caush UIKeyboardTaskEntry crash</a>
       
-        <a class="basic-alignment right" href="/blog/2016/03/21/nstimer-retain-target/" title="Next Post: NSTimer 使用注意事项">NSTimer 使用注意事项 &raquo;</a>
       
     </p>
   </footer>
@@ -271,7 +311,7 @@ A program may be compiled with the option -fobjc-arc-exceptions in order to enab
   <section>
     <h1>评论：</h1>
     <div id="comments" aria-live="polite"><!-- 多说评论框 start -->
-<div class="ds-thread" data-thread-key="/blog/2016/03/13/arc-nsexception-cause-memory-leak" data-title="Arc下NSException有可能会内存泄露" data-url="http://kaihaodir.github.io/blog/2016/03/13/arc-nsexception-cause-memory-leak/"></div>
+<div class="ds-thread" data-thread-key="/blog/2016/08/13/mutithread-notification-crash" data-title="多线程下通知响应函数Crash" data-url="http://kaihaodir.github.io/blog/2016/08/13/mutithread-notification-crash/"></div>
 <!-- 多说评论框 end -->
 <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
 <script type="text/javascript">

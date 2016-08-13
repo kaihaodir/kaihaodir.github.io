@@ -1,0 +1,467 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Hook __NSArrayM objectAtIndex Caush UIKeyboardTaskEntry Crash - Thinking...</title>
+  <meta name="author" content="Kai">
+
+  
+  <meta name="description" content="前题 为了统一处理数组越界的问题，我们 HOOK __NSArrayM 的 objectAtIndex: 方法 问题： 在可以输入文字的页面，使用"英文"键盘输入，触发联想功能，然后切换到后台，再激活程序，随便点一下就会崩溃。 崩溃堆栈： 1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://kaihaodir.github.io/blog/2016/06/08/hook-nsarraym-objectatindex-keyboard-crash/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Thinking..." type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script> -->
+  <script src="//ajax.useso.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+-->
+<link href="http://fonts.useso.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.useso.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Thinking...</a></h1>
+  
+    <h2>~宝剑锋从磨砺出,梅花香自苦寒来~</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="kaihaodir.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Hook __NSArrayM objectAtIndex Caush UIKeyboardTaskEntry Crash</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-06-08T16:27:22+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>8</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>4:27 pm</span></time>
+        
+        
+            | <a href="#comments">评论</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h3>前题</h3>
+
+<pre><code>为了统一处理数组越界的问题，我们 HOOK __NSArrayM 的 objectAtIndex: 方法
+</code></pre>
+
+<h3>问题：</h3>
+
+<pre><code>在可以输入文字的页面，使用"英文"键盘输入，触发联想功能，然后切换到后台，再激活程序，随便点一下就会崩溃。
+</code></pre>
+
+<h3>崩溃堆栈：</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(lldb) bt
+</span><span class='line'>* thread #1: tid = 0xf9f0c, 0x0000000182aadb9c libobjc.A.dylib`objc_msgSend + 28, queue = 'com.apple.main-thread', stop reason = EXC_BAD_ACCESS (code=1, address=0x61746572847637e1)
+</span><span class='line'>    frame #0: 0x0000000182aadb9c libobjc.A.dylib`objc_msgSend + 28
+</span><span class='line'>    frame #1: 0x0000000182ab5288 libobjc.A.dylib`objc_object::sidetable_release(bool) + 220
+</span><span class='line'>    frame #2: 0x0000000182edd8e8 libsystem_blocks.dylib`_Block_release + 156
+</span><span class='line'>    frame #3: 0x0000000188f256b0 UIKit`-[UIKeyboardTaskEntry dealloc] + 44
+</span><span class='line'>  * frame #4: 0x00000001000ba5dc KeyboardCrash`-[MethodsHooker myRelease](self=0x000000014df0c140, _cmd="release") + 308 at MethodsHooker.m:138
+</span><span class='line'>    frame #5: 0x0000000182ab5ae8 libobjc.A.dylib`(anonymous namespace)::AutoreleasePoolPage::pop(void*) + 508
+</span><span class='line'>    frame #6: 0x00000001833149fc CoreFoundation`_CFAutoreleasePoolPop + 28
+</span><span class='line'>    frame #7: 0x00000001888549e4 UIKit`_prepareForCAFlush + 352
+</span><span class='line'>    frame #8: 0x0000000188592fa4 UIKit`_UIApplicationHandleEventQueue + 4900
+</span><span class='line'>    frame #9: 0x00000001833ed09c CoreFoundation`__CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+</span><span class='line'>    frame #10: 0x00000001833ecb30 CoreFoundation`__CFRunLoopDoSources0 + 540
+</span><span class='line'>    frame #11: 0x00000001833ea830 CoreFoundation`__CFRunLoopRun + 724
+</span><span class='line'>    frame #12: 0x0000000183314c50 CoreFoundation`CFRunLoopRunSpecific + 384
+</span><span class='line'>    frame #13: 0x0000000184bfc088 GraphicsServices`GSEventRunModal + 180
+</span><span class='line'>    frame #14: 0x00000001885fe088 UIKit`UIApplicationMain + 204
+</span><span class='line'>    frame #15: 0x00000001000ba73c KeyboardCrash`main(argc=1, argv=0x000000016fd4baf8) + 124 at main.m:14
+</span><span class='line'>    frame #16: 0x0000000182eb28b8 libdyld.dylib`start + 4</span></code></pre></td></tr></table></div></figure>
+
+
+<p>设置<strong>异常断点</strong>和<strong>Enable Zombie Objects</strong>后，可以看到以下异常信息：</p>
+
+<blockquote><p>2016-06-08 16:50:12.430 KeyboardCrash[1487:1026067] *** -[UIKeyboardLayoutStar release]: message sent to deallocated instance 0x1580b6600</p></blockquote>
+
+<p>主要是因为<code>UIKeyboardLayoutStar</code>对象已销毁了，但还有人调用 <code>-[UIKeyboardLayoutStar release]</code> 引起的。</p>
+
+<h2>分析过程</h2>
+
+<ul>
+<li>新实现的方法</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>- (instancetype)mySelfMutableObjectAtIndex:(NSUInteger)index
+</span><span class='line'>{
+</span><span class='line'>    
+</span><span class='line'>    NSArray *array = (NSArray *)self;
+</span><span class='line'>    if (array.count &lt;= index) {
+</span><span class='line'>        return nil;
+</span><span class='line'>    }
+</span><span class='line'>    
+</span><span class='line'>    return [self originalMutableObjectAtIndex:index];
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>函数逻辑比较简单，应该不会有什么问题。于是我又把判断条件去掉，改成这样</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>- (instancetype)mySelfMutableObjectAtIndex:(NSUInteger)index
+</span><span class='line'>{   
+</span><span class='line'>    return [self originalMutableObjectAtIndex:index];
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>奇怪的发现，问题居然没有出现了。那为什么加了判断条件会有问题，到底这两个函数有什么不一样呢？</p>
+
+<p>于是反汇编对比了一下</p>
+
+<p><strong>没加判断条件的汇编代码:</strong></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>KeyboardCrash`-[MethodsHooker mySelfMutableObjectAtIndex:]:
+</span><span class='line'>    0x1000c624c &lt;+0&gt;:  stp    x29, x30, [sp, #-16]!
+</span><span class='line'>    0x1000c6250 &lt;+4&gt;:  mov    x29, sp
+</span><span class='line'>    0x1000c6254 &lt;+8&gt;:  sub    sp, sp, #32               ; =32 
+</span><span class='line'>    0x1000c6258 &lt;+12&gt;: adrp   x8, 3
+</span><span class='line'>    0x1000c625c &lt;+16&gt;: add    x8, x8, #216              ; =216 
+</span><span class='line'>    0x1000c6260 &lt;+20&gt;: stur   x0, [x29, #-8]
+</span><span class='line'>    0x1000c6264 &lt;+24&gt;: str    x1, [sp, #16]
+</span><span class='line'>    0x1000c6268 &lt;+28&gt;: str    x2, [sp, #8]
+</span><span class='line'>-&gt;  0x1000c626c &lt;+32&gt;: ldur   x0, [x29, #-8]
+</span><span class='line'>    0x1000c6270 &lt;+36&gt;: ldr    x2, [sp, #8]
+</span><span class='line'>    0x1000c6274 &lt;+40&gt;: ldr    x1, [x8]
+</span><span class='line'>    0x1000c6278 &lt;+44&gt;: bl     0x1000c684c               ; symbol stub for: objc_msgSend
+</span><span class='line'>    0x1000c627c &lt;+48&gt;: mov    sp, x29
+</span><span class='line'>    0x1000c6280 &lt;+52&gt;: ldp    x29, x30, [sp], #16
+</span><span class='line'>    0x1000c6284 &lt;+56&gt;: ret    </span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>加了判断的汇编代码：</strong></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(lldb) dis
+</span><span class='line'>KeyboardCrash`-[MethodsHooker mySelfMutableObjectAtIndex:]:
+</span><span class='line'>    0x1000ca1c8 &lt;+0&gt;:   stp    x29, x30, [sp, #-16]!
+</span><span class='line'>    0x1000ca1cc &lt;+4&gt;:   mov    x29, sp
+</span><span class='line'>    0x1000ca1d0 &lt;+8&gt;:   sub    sp, sp, #48               ; =48 
+</span><span class='line'>    0x1000ca1d4 &lt;+12&gt;:  stur   x0, [x29, #-16]
+</span><span class='line'>    0x1000ca1d8 &lt;+16&gt;:  str    x1, [sp, #24]
+</span><span class='line'>    0x1000ca1dc &lt;+20&gt;:  str    x2, [sp, #16]
+</span><span class='line'>-&gt;  0x1000ca1e0 &lt;+24&gt;:  ldur   x0, [x29, #-16]
+</span><span class='line'>    0x1000ca1e4 &lt;+28&gt;:  bl     0x1000ca854               ; symbol stub for: objc_retain
+</span><span class='line'>    0x1000ca1e8 &lt;+32&gt;:  adrp   x1, 3
+</span><span class='line'>    0x1000ca1ec &lt;+36&gt;:  add    x1, x1, #256              ; =256 
+</span><span class='line'>    0x1000ca1f0 &lt;+40&gt;:  str    x0, [sp, #8]
+</span><span class='line'>    0x1000ca1f4 &lt;+44&gt;:  ldr    x0, [sp, #8]
+</span><span class='line'>    0x1000ca1f8 &lt;+48&gt;:  ldr    x1, [x1]
+</span><span class='line'>    0x1000ca1fc &lt;+52&gt;:  bl     0x1000ca830               ; symbol stub for: objc_msgSend
+</span><span class='line'>    0x1000ca200 &lt;+56&gt;:  ldr    x1, [sp, #16]
+</span><span class='line'>    0x1000ca204 &lt;+60&gt;:  cmp    x0, x1
+</span><span class='line'>    0x1000ca208 &lt;+64&gt;:  b.hi   0x1000ca220               ; &lt;+88&gt; at MethodsHooker.m:60
+</span><span class='line'>    0x1000ca20c &lt;+68&gt;:  orr    w8, wzr, #0x1
+</span><span class='line'>    0x1000ca210 &lt;+72&gt;:  movz   x9, #0
+</span><span class='line'>    0x1000ca214 &lt;+76&gt;:  stur   x9, [x29, #-8]
+</span><span class='line'>    0x1000ca218 &lt;+80&gt;:  str    w8, [sp, #4]
+</span><span class='line'>    0x1000ca21c &lt;+84&gt;:  b      0x1000ca250               ; &lt;+136&gt; at MethodsHooker.m:63
+</span><span class='line'>    0x1000ca220 &lt;+88&gt;:  adrp   x8, 3
+</span><span class='line'>    0x1000ca224 &lt;+92&gt;:  add    x8, x8, #224              ; =224 
+</span><span class='line'>    0x1000ca228 &lt;+96&gt;:  ldur   x9, [x29, #-16]
+</span><span class='line'>    0x1000ca22c &lt;+100&gt;: ldr    x2, [sp, #16]
+</span><span class='line'>    0x1000ca230 &lt;+104&gt;: ldr    x1, [x8]
+</span><span class='line'>    0x1000ca234 &lt;+108&gt;: mov    x0, x9
+</span><span class='line'>    0x1000ca238 &lt;+112&gt;: bl     0x1000ca830               ; symbol stub for: objc_msgSend
+</span><span class='line'>    0x1000ca23c &lt;+116&gt;: mov    x29, x29
+</span><span class='line'>    0x1000ca240 &lt;+120&gt;: bl     0x1000ca860               ; symbol stub for: objc_retainAutoreleasedReturnValue
+</span><span class='line'>    0x1000ca244 &lt;+124&gt;: orr    w10, wzr, #0x1
+</span><span class='line'>    0x1000ca248 &lt;+128&gt;: stur   x0, [x29, #-8]
+</span><span class='line'>    0x1000ca24c &lt;+132&gt;: str    w10, [sp, #4]
+</span><span class='line'>    0x1000ca250 &lt;+136&gt;: add    x0, sp, #8                ; =8 
+</span><span class='line'>    0x1000ca254 &lt;+140&gt;: movz   x1, #0
+</span><span class='line'>    0x1000ca258 &lt;+144&gt;: bl     0x1000ca86c               ; symbol stub for: objc_storeStrong
+</span><span class='line'>    0x1000ca25c &lt;+148&gt;: ldur   x0, [x29, #-8]
+</span><span class='line'>    0x1000ca260 &lt;+152&gt;: mov    sp, x29
+</span><span class='line'>    0x1000ca264 &lt;+156&gt;: ldp    x29, x30, [sp], #16
+</span><span class='line'>    0x1000ca268 &lt;+160&gt;: b      0x1000ca80c               ; symbol stub for: objc_autoreleaseReturnValue
+</span><span class='line'>    </span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以看到， 添加了几句判断语句后， 编译器会帮我们添加了一些 objc_retain, objc_storeStrong(release), 和 objc_autoreleaseReturnValue 控制引用计数的函数。
+而在函数最后返回的时候是调用了  objc_autoreleaseReturnValue 这个函数。</p>
+
+<p>为了更好的观察 <code>UIKeyboardLayoutStar</code> 对象的引用技术变化， 我HOOK了 <code>NSObject</code> 的 <code>retain</code>, <code>release</code>, <code>autorelease</code> 函数， 并且把当前的引用计数（<code>retainCount</code>）打印出来。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Kai</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-06-08T16:27:22+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>8</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>4:27 pm</span></time>
+      
+
+
+    </p>
+    
+       <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/06/03/lldb-command/" title="Previous Post: LLDB Command">&laquo; LLDB Command</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2016/08/13/mutithread-notification-crash/" title="Next Post: 多线程下通知响应函数Crash">多线程下通知响应函数Crash &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+    <h1>评论：</h1>
+    <div id="comments" aria-live="polite"><!-- 多说评论框 start -->
+<div class="ds-thread" data-thread-key="/blog/2016/06/08/hook-nsarraym-objectatindex-keyboard-crash" data-title="Hook __NSArrayM objectAtIndex caush UIKeyboardTaskEntry crash" data-url="http://kaihaodir.github.io/blog/2016/06/08/hook-nsarraym-objectatindex-keyboard-crash/"></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    var duoshuoQuery = {short_name:"likaihao"};
+    (function() {
+
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+     })();
+ </script>
+ <!-- 多说公共JS代码 end --></div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/13/mutithread-notification-crash/">多线程下通知响应函数Crash</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/06/08/hook-nsarraym-objectatindex-keyboard-crash/">Hook __NSArrayM objectAtIndex Caush UIKeyboardTaskEntry Crash</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/06/03/lldb-command/">LLDB Command</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/05/25/debugfindcrashtext/">找出引起异常的文字</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/05/10/store-weak-crash-in-dealloc/">Dealloc 时取 Weak Self 时崩溃</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="10" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+</section>
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Kai -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
