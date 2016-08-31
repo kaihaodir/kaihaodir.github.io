@@ -221,9 +221,6 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<!--MORE-->
-
-
 <p>常规的通知接收模型大致都是这样格式，但是这种方式在处理多线程的调用时会有问题。</p>
 
 <p>由于PostNotification是在另一个线程的，所以 <code>onNotification</code> 也会在另一个线程执行。 这个时候很多人会认为是不是多线程访问对象引起的崩溃？那加个锁可以解决问题吗？</p>
@@ -303,6 +300,8 @@
         <a class="basic-alignment left" href="/blog/2016/06/08/hook-nsarraym-objectatindex-keyboard-crash/" title="Previous Post: Hook __NSArrayM objectAtIndex caush UIKeyboardTaskEntry crash">&laquo; Hook __NSArrayM objectAtIndex caush UIKeyboardTaskEntry crash</a>
       
       
+        <a class="basic-alignment right" href="/blog/2016/08/31/save-image-crash/" title="Next Post: UIImagePNGRepresentation 保存图片时Crash">UIImagePNGRepresentation 保存图片时Crash &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -338,6 +337,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2016/08/31/save-image-crash/">UIImagePNGRepresentation 保存图片时Crash</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2016/08/13/mutithread-notification-crash/">多线程下通知响应函数Crash</a>
       </li>
     
@@ -351,10 +354,6 @@
     
       <li class="post">
         <a href="/blog/2016/05/25/debugfindcrashtext/">找出引起异常的文字</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/05/10/store-weak-crash-in-dealloc/">Dealloc 时取 Weak Self 时崩溃</a>
       </li>
     
   </ul>

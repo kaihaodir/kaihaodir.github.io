@@ -4,7 +4,7 @@
   <title><![CDATA[Thinking...]]></title>
   <link href="http://kaihaodir.github.io/atom.xml" rel="self"/>
   <link href="http://kaihaodir.github.io/"/>
-  <updated>2016-08-13T17:21:45+08:00</updated>
+  <updated>2016-08-31T18:54:07+08:00</updated>
   <id>http://kaihaodir.github.io/</id>
   <author>
     <name><![CDATA[Kai]]></name>
@@ -12,6 +12,200 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[UIImagePNGRepresentation 保存图片时Crash]]></title>
+    <link href="http://kaihaodir.github.io/blog/2016/08/31/save-image-crash/"/>
+    <updated>2016-08-31T17:37:11+08:00</updated>
+    <id>http://kaihaodir.github.io/blog/2016/08/31/save-image-crash</id>
+    <content type="html"><![CDATA[<p>最近遇到一个保存图片时的崩溃， 崩溃信息如下：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>0  CoreFoundation!__exceptionPreprocess + 0x84
+</span><span class='line'>1  libobjc.A.dylib!objc_exception_throw + 0x38
+</span><span class='line'>2  CoreFoundation!+[NSException raise:format:] + 0x7c
+</span><span class='line'>3  Foundation!_NSMutableDataGrowBytes + 0x300
+</span><span class='line'>4  Foundation!-[NSConcreteMutableData appendBytes:length:] + 0x174
+</span><span class='line'>5  ImageIO!CGImageWriteSessionPutBytes + 0x94
+</span><span class='line'>6  ImageIO!write_fn + 0x28
+</span><span class='line'>7  ImageIO!png_write_chunk_data + 0x34
+</span><span class='line'>8  ImageIO!_cg_png_write_complete_chunk + 0x40
+</span><span class='line'>9  ImageIO!png_compress_IDAT + 0x160
+</span><span class='line'>10 ImageIO!png_write_find_filter + 0xa80
+</span><span class='line'>11 ImageIO!_cg_png_write_row + 0x300
+</span><span class='line'>12 ImageIO!writeOnePng + 0x1358
+</span><span class='line'>13 ImageIO!_CGImagePluginWritePNG + 0x90
+</span><span class='line'>14 ImageIO!CGImageDestinationFinalize + 0x1e8
+</span><span class='line'>15 UIKit!UIImagePNGRepresentation + 0x248
+</span><span class='line'>16 MFAFImageCache addImage:forRequest:withAdditionalIdentifier:
+</span></code></pre></td></tr></table></div></figure>
+
+
+<!--MORE-->
+
+
+<p>提示的异常信息是：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>Exception Name: NSMallocException
+</span><span class='line'>Exception Reason: *** -[NSConcreteMutableData appendBytes:length:]: unable to allocate memory for length (1751849)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>查看一下调用函数, 主要调用如下：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>NSString *filePath = [FileModel getLocalFileName:kPhotosDirectory byUrl:[[request URL] absoluteString]];
+</span><span class='line'> if (image) {
+</span><span class='line'>     @try {
+</span><span class='line'>         NSData *imageData = UIImagePNGRepresentation(image);
+</span><span class='line'>         [imageData writeToFile:filePath atomically:YES];
+</span><span class='line'>     } @catch (NSException *exception) {
+</span><span class='line'>         MFLogError(@"ImageCache", @"save image error:%@", exception);
+</span><span class='line'>     } @finally {
+</span><span class='line'>         
+</span><span class='line'>     }
+</span><span class='line'> }
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>说明在执行 <code>NSData *imageData = UIImagePNGRepresentation(image)</code> 这个操作时，崩溃了。而且崩溃的原因是<strong>内存分配出错</strong>。 通常这种问题都是因为内存不足引起的。但是查看了一下log， 发现并没有 MemoryWarning 这句日志，<strong>说明程序还没来得及处理系统的内存警告就崩溃了</strong>。</p>
+
+<p>根据这些现象猜测可能的原因
+* 图片比较大
+* 外层也许有个for循环，多次调用，导致临时对象没来得及马上释放</p>
+
+<p>针对这两种猜测，作了相应的处理</p>
+
+<h4>图片内容较大</h4>
+
+<p>其实有 UIImage 对象的时候，说明图片已经可以正常展示，加载这张图片到内存暂时是没有问题的。但保存的时候又根据 UIImage 对象生成 NSData， 然后在通过NSData保存文件。 在NSData写入文件到释放前，内存里面其实有两份 图片 的数据， 一份是显示的， 一份是准备用来保存的NSData。 这样其实就是临时分配了一块大空间，如果可以减少临时对象的分配，直接读取UIImage的数据来存储就可以降低内存的使用。
+通过查阅文档，发现Image IO 的库可以做到。</p>
+
+<p>于是，保存函数改成这样：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>+ (BOOL)saveImage:(UIImage *)image toFile:(NSString *)filePath
+</span><span class='line'>{
+</span><span class='line'>    if (!image.CGImage) {
+</span><span class='line'>        return NO;
+</span><span class='line'>    }
+</span><span class='line'>    
+</span><span class='line'>    CFURLRef url = (__bridge CFURLRef)[NSURL fileURLWithPath:filePath];
+</span><span class='line'>    CGImageDestinationRef destination = CGImageDestinationCreateWithURL(url, kUTTypePNG, 1, nil);
+</span><span class='line'>    if (!destination) {
+</span><span class='line'>        return NO;
+</span><span class='line'>    }
+</span><span class='line'>    
+</span><span class='line'>    CGImageDestinationAddImage(destination, image.CGImage, nil);
+</span><span class='line'>    CGImageDestinationFinalize(destination);
+</span><span class='line'>    CFRelease(destination);
+</span><span class='line'>    
+</span><span class='line'>    return YES;
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>临时对象没有马上释放</h4>
+
+<p>这种情况比较好处理，就是因为加到 AutoReleasePool 的对象没有马上释放，必须要等下一次 RunLoop 循环才会清理。
+这种问题可以加 @autoreleasepool{} 处理。
+最后函数变成：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>+ (BOOL)saveImage:(UIImage *)image toFile:(NSString *)filePath
+</span><span class='line'>{
+</span><span class='line'>    if (!image.CGImage) {
+</span><span class='line'>        return NO;
+</span><span class='line'>    }
+</span><span class='line'>    
+</span><span class='line'>    @autoreleasepool {
+</span><span class='line'>        CFURLRef url = (__bridge CFURLRef)[NSURL fileURLWithPath:filePath];
+</span><span class='line'>        CGImageDestinationRef destination = CGImageDestinationCreateWithURL(url, kUTTypePNG, 1, nil);
+</span><span class='line'>        if (!destination) {
+</span><span class='line'>            return NO;
+</span><span class='line'>        }
+</span><span class='line'>        
+</span><span class='line'>        CGImageDestinationAddImage(destination, image.CGImage, nil);
+</span><span class='line'>        CGImageDestinationFinalize(destination);
+</span><span class='line'>        CFRelease(destination);
+</span><span class='line'>    }
+</span><span class='line'>    
+</span><span class='line'>    return YES;
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>当然 @autoreleasepool 写在这里作用并不大， 应该要加在相应的for()循环里面。
+因此定义一个宏，方便替换，只要把原来的 for 替换成 AutoRelease_for 就可以。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>#define AutoRelease_for(...) for(__VA_ARGS__) @autoreleasepool </span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[多线程下通知响应函数Crash]]></title>
@@ -105,9 +299,6 @@
 </span><span class='line'>}
 </span><span class='line'>
 </span></code></pre></td></tr></table></div></figure>
-
-
-<!--MORE-->
 
 
 <p>常规的通知接收模型大致都是这样格式，但是这种方式在处理多线程的调用时会有问题。</p>

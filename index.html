@@ -9,7 +9,7 @@
   <meta name="author" content="Kai">
 
   
-  <meta name="description" content="今天发现一个老问题引起的崩溃，记录一下。 先有问题的代码： 1
+  <meta name="description" content="最近遇到一个保存图片时的崩溃， 崩溃信息如下： 1
 2
 3
 4
@@ -26,30 +26,8 @@
 15
 16
 17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
-31
-32
-33
-34
-35
-36
-37
-38
-39
-40
-41 @ &hellip;">
+0 CoreFoundation!__exceptionPreprocess + 0x84
+1 libobjc.A.dylib! &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -110,6 +88,80 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/08/31/save-image-crash/">UIImagePNGRepresentation 保存图片时Crash</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-08-31T17:37:11+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>31</span><span class='date-suffix'>st</span>, <span class='date-year'>2016</span></span> <span class='time'>5:37 pm</span></time>
+        
+        
+            | <a href="/blog/2016/08/31/save-image-crash/#comments">评论</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>最近遇到一个保存图片时的崩溃， 崩溃信息如下：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>0  CoreFoundation!__exceptionPreprocess + 0x84
+</span><span class='line'>1  libobjc.A.dylib!objc_exception_throw + 0x38
+</span><span class='line'>2  CoreFoundation!+[NSException raise:format:] + 0x7c
+</span><span class='line'>3  Foundation!_NSMutableDataGrowBytes + 0x300
+</span><span class='line'>4  Foundation!-[NSConcreteMutableData appendBytes:length:] + 0x174
+</span><span class='line'>5  ImageIO!CGImageWriteSessionPutBytes + 0x94
+</span><span class='line'>6  ImageIO!write_fn + 0x28
+</span><span class='line'>7  ImageIO!png_write_chunk_data + 0x34
+</span><span class='line'>8  ImageIO!_cg_png_write_complete_chunk + 0x40
+</span><span class='line'>9  ImageIO!png_compress_IDAT + 0x160
+</span><span class='line'>10 ImageIO!png_write_find_filter + 0xa80
+</span><span class='line'>11 ImageIO!_cg_png_write_row + 0x300
+</span><span class='line'>12 ImageIO!writeOnePng + 0x1358
+</span><span class='line'>13 ImageIO!_CGImagePluginWritePNG + 0x90
+</span><span class='line'>14 ImageIO!CGImageDestinationFinalize + 0x1e8
+</span><span class='line'>15 UIKit!UIImagePNGRepresentation + 0x248
+</span><span class='line'>16 MFAFImageCache addImage:forRequest:withAdditionalIdentifier:
+</span></code></pre></td></tr></table></div></figure>
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/08/31/save-image-crash/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -224,12 +276,54 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
+<p>常规的通知接收模型大致都是这样格式，但是这种方式在处理多线程的调用时会有问题。</p>
+
+<p>由于PostNotification是在另一个线程的，所以 <code>onNotification</code> 也会在另一个线程执行。 这个时候很多人会认为是不是多线程访问对象引起的崩溃？那加个锁可以解决问题吗？</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)onNotification
+</span><span class='line'>{
+</span><span class='line'>  @synchronized (self) {
+</span><span class='line'>      xxx;
+</span><span class='line'>      xxx;
+</span><span class='line'>  }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>没错， 多线程访问数据时会有问题，但很明显这里只是输出一下 self， 并没有涉及到数据的修改，所以这种方式的加锁是不能解决问题的。</p>
+
+<p>主要原因是当后台线程在执行 <code>onNotification</code> 方法的时候，执行到一半，其他线程把对象释放了。</p>
+
+<h3>解决方法：</h3>
+
+<ul>
+<li>保证在同一线程发通知</li>
+<li>如果要支持多线程调用，可以用 &ldquo;强引用&rdquo; 确保对象不被释放。</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)mutithread_message
+</span><span class='line'>{
+</span><span class='line'>  __strong __typeof(self) strongSelf = self;
+</span><span class='line'>  [strongSelf op];
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这种其实就是 block 里面常规的  weak-strong 的写法，只是很少会直接写到函数里面。</p>
 </div>
   
-  
-    <footer>
-      <a rel="full-article" href="/blog/2016/08/13/mutithread-notification-crash/">Read on &rarr;</a>
-    </footer>
   
 
 
@@ -824,6 +918,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2016/08/31/save-image-crash/">UIImagePNGRepresentation 保存图片时Crash</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2016/08/13/mutithread-notification-crash/">多线程下通知响应函数Crash</a>
       </li>
     
@@ -837,10 +935,6 @@
     
       <li class="post">
         <a href="/blog/2016/05/25/debugfindcrashtext/">找出引起异常的文字</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/05/10/store-weak-crash-in-dealloc/">Dealloc 时取 Weak Self 时崩溃</a>
       </li>
     
   </ul>

@@ -1,0 +1,422 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>UIImagePNGRepresentation 保存图片时Crash - Thinking...</title>
+  <meta name="author" content="Kai">
+
+  
+  <meta name="description" content="最近遇到一个保存图片时的崩溃， 崩溃信息如下： 1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+0 CoreFoundation!__exceptionPreprocess + 0x84
+1 libobjc.A.dylib! &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://kaihaodir.github.io/blog/2016/08/31/save-image-crash/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Thinking..." type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script> -->
+  <script src="//ajax.useso.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+-->
+<link href="http://fonts.useso.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.useso.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Thinking...</a></h1>
+  
+    <h2>~宝剑锋从磨砺出,梅花香自苦寒来~</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="kaihaodir.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">UIImagePNGRepresentation 保存图片时Crash</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-08-31T17:37:11+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>31</span><span class='date-suffix'>st</span>, <span class='date-year'>2016</span></span> <span class='time'>5:37 pm</span></time>
+        
+        
+            | <a href="#comments">评论</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>最近遇到一个保存图片时的崩溃， 崩溃信息如下：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>0  CoreFoundation!__exceptionPreprocess + 0x84
+</span><span class='line'>1  libobjc.A.dylib!objc_exception_throw + 0x38
+</span><span class='line'>2  CoreFoundation!+[NSException raise:format:] + 0x7c
+</span><span class='line'>3  Foundation!_NSMutableDataGrowBytes + 0x300
+</span><span class='line'>4  Foundation!-[NSConcreteMutableData appendBytes:length:] + 0x174
+</span><span class='line'>5  ImageIO!CGImageWriteSessionPutBytes + 0x94
+</span><span class='line'>6  ImageIO!write_fn + 0x28
+</span><span class='line'>7  ImageIO!png_write_chunk_data + 0x34
+</span><span class='line'>8  ImageIO!_cg_png_write_complete_chunk + 0x40
+</span><span class='line'>9  ImageIO!png_compress_IDAT + 0x160
+</span><span class='line'>10 ImageIO!png_write_find_filter + 0xa80
+</span><span class='line'>11 ImageIO!_cg_png_write_row + 0x300
+</span><span class='line'>12 ImageIO!writeOnePng + 0x1358
+</span><span class='line'>13 ImageIO!_CGImagePluginWritePNG + 0x90
+</span><span class='line'>14 ImageIO!CGImageDestinationFinalize + 0x1e8
+</span><span class='line'>15 UIKit!UIImagePNGRepresentation + 0x248
+</span><span class='line'>16 MFAFImageCache addImage:forRequest:withAdditionalIdentifier:
+</span></code></pre></td></tr></table></div></figure>
+
+
+<!--MORE-->
+
+
+<p>提示的异常信息是：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>Exception Name: NSMallocException
+</span><span class='line'>Exception Reason: *** -[NSConcreteMutableData appendBytes:length:]: unable to allocate memory for length (1751849)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>查看一下调用函数, 主要调用如下：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>NSString *filePath = [FileModel getLocalFileName:kPhotosDirectory byUrl:[[request URL] absoluteString]];
+</span><span class='line'> if (image) {
+</span><span class='line'>     @try {
+</span><span class='line'>         NSData *imageData = UIImagePNGRepresentation(image);
+</span><span class='line'>         [imageData writeToFile:filePath atomically:YES];
+</span><span class='line'>     } @catch (NSException *exception) {
+</span><span class='line'>         MFLogError(@"ImageCache", @"save image error:%@", exception);
+</span><span class='line'>     } @finally {
+</span><span class='line'>         
+</span><span class='line'>     }
+</span><span class='line'> }
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>说明在执行 <code>NSData *imageData = UIImagePNGRepresentation(image)</code> 这个操作时，崩溃了。而且崩溃的原因是<strong>内存分配出错</strong>。 通常这种问题都是因为内存不足引起的。但是查看了一下log， 发现并没有 MemoryWarning 这句日志，<strong>说明程序还没来得及处理系统的内存警告就崩溃了</strong>。</p>
+
+<p>根据这些现象猜测可能的原因
+* 图片比较大
+* 外层也许有个for循环，多次调用，导致临时对象没来得及马上释放</p>
+
+<p>针对这两种猜测，作了相应的处理</p>
+
+<h4>图片内容较大</h4>
+
+<p>其实有 UIImage 对象的时候，说明图片已经可以正常展示，加载这张图片到内存暂时是没有问题的。但保存的时候又根据 UIImage 对象生成 NSData， 然后在通过NSData保存文件。 在NSData写入文件到释放前，内存里面其实有两份 图片 的数据， 一份是显示的， 一份是准备用来保存的NSData。 这样其实就是临时分配了一块大空间，如果可以减少临时对象的分配，直接读取UIImage的数据来存储就可以降低内存的使用。
+通过查阅文档，发现Image IO 的库可以做到。</p>
+
+<p>于是，保存函数改成这样：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>+ (BOOL)saveImage:(UIImage *)image toFile:(NSString *)filePath
+</span><span class='line'>{
+</span><span class='line'>    if (!image.CGImage) {
+</span><span class='line'>        return NO;
+</span><span class='line'>    }
+</span><span class='line'>    
+</span><span class='line'>    CFURLRef url = (__bridge CFURLRef)[NSURL fileURLWithPath:filePath];
+</span><span class='line'>    CGImageDestinationRef destination = CGImageDestinationCreateWithURL(url, kUTTypePNG, 1, nil);
+</span><span class='line'>    if (!destination) {
+</span><span class='line'>        return NO;
+</span><span class='line'>    }
+</span><span class='line'>    
+</span><span class='line'>    CGImageDestinationAddImage(destination, image.CGImage, nil);
+</span><span class='line'>    CGImageDestinationFinalize(destination);
+</span><span class='line'>    CFRelease(destination);
+</span><span class='line'>    
+</span><span class='line'>    return YES;
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>临时对象没有马上释放</h4>
+
+<p>这种情况比较好处理，就是因为加到 AutoReleasePool 的对象没有马上释放，必须要等下一次 RunLoop 循环才会清理。
+这种问题可以加 @autoreleasepool{} 处理。
+最后函数变成：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>+ (BOOL)saveImage:(UIImage *)image toFile:(NSString *)filePath
+</span><span class='line'>{
+</span><span class='line'>    if (!image.CGImage) {
+</span><span class='line'>        return NO;
+</span><span class='line'>    }
+</span><span class='line'>    
+</span><span class='line'>    @autoreleasepool {
+</span><span class='line'>        CFURLRef url = (__bridge CFURLRef)[NSURL fileURLWithPath:filePath];
+</span><span class='line'>        CGImageDestinationRef destination = CGImageDestinationCreateWithURL(url, kUTTypePNG, 1, nil);
+</span><span class='line'>        if (!destination) {
+</span><span class='line'>            return NO;
+</span><span class='line'>        }
+</span><span class='line'>        
+</span><span class='line'>        CGImageDestinationAddImage(destination, image.CGImage, nil);
+</span><span class='line'>        CGImageDestinationFinalize(destination);
+</span><span class='line'>        CFRelease(destination);
+</span><span class='line'>    }
+</span><span class='line'>    
+</span><span class='line'>    return YES;
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>当然 @autoreleasepool 写在这里作用并不大， 应该要加在相应的for()循环里面。
+因此定义一个宏，方便替换，只要把原来的 for 替换成 AutoRelease_for 就可以。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>#define AutoRelease_for(...) for(__VA_ARGS__) @autoreleasepool </span></code></pre></td></tr></table></div></figure>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Kai</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-08-31T17:37:11+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>31</span><span class='date-suffix'>st</span>, <span class='date-year'>2016</span></span> <span class='time'>5:37 pm</span></time>
+      
+
+
+    </p>
+    
+       <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/08/13/mutithread-notification-crash/" title="Previous Post: 多线程下通知响应函数Crash">&laquo; 多线程下通知响应函数Crash</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+    <h1>评论：</h1>
+    <div id="comments" aria-live="polite"><!-- 多说评论框 start -->
+<div class="ds-thread" data-thread-key="/blog/2016/08/31/save-image-crash" data-title="UIImagePNGRepresentation 保存图片时Crash" data-url="http://kaihaodir.github.io/blog/2016/08/31/save-image-crash/"></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    var duoshuoQuery = {short_name:"likaihao"};
+    (function() {
+
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+     })();
+ </script>
+ <!-- 多说公共JS代码 end --></div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/31/save-image-crash/">UIImagePNGRepresentation 保存图片时Crash</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/08/13/mutithread-notification-crash/">多线程下通知响应函数Crash</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/06/08/hook-nsarraym-objectatindex-keyboard-crash/">Hook __NSArrayM objectAtIndex Caush UIKeyboardTaskEntry Crash</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/06/03/lldb-command/">LLDB Command</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/05/25/debugfindcrashtext/">找出引起异常的文字</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+<section>
+<h1>Recent Comments</h1>
+<ul class="ds-recent-comments" data-num-items="10" data-show-avatars="0" data-show-time="0" data-show-title="0" data-show-admin="0" data-excerpt-length="18"></ul>
+
+</section>
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Kai -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
